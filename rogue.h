@@ -545,7 +545,7 @@ extern int rnd(int);
 extern int diag_ok(coord *, coord *);
 extern int cansee(int, int);
 extern int step_ok(int);
-extern void do_chase(struct thing *);
+extern int do_chase(struct thing *);
 extern int chase(struct thing *, coord *);
 extern int attack(struct thing *);
 extern void call();
