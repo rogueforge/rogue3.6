@@ -488,6 +488,29 @@ register double *avg;
 #endif
 
 #ifdef UCOUNT
+
+#ifdef __CYGWIN__
+#include <utmp.h>
+
+int
+ucount()
+{
+    struct utmp *up=NULL;
+    int count=0;
+
+    setutent();
+    do
+    {
+	up = getutent();
+	if (up && up->ut_type == USER_PROCESS)
+	    count++;
+    } while(up != NULL);
+
+   endutent();
+
+   return(count);
+}
+#else
 #include <utmpx.h>
 
 int
@@ -509,3 +532,5 @@ ucount()
    return(count);
 }
 #endif
+#endif
+
