@@ -131,10 +131,24 @@ dist.linux:
 	tar cf rogue36.tar rogue rogue.6 rogue.r
 	gzip rogue36.tar
 	mv rogue36.tar.gz rogue36-linux.tar.gz
+
+dist.interix: 
+	make clean
+	make rogue
+	tar cf rogue36.tar rogue rogue.6 rogue.r
+	gzip rogue36.tar
+	mv rogue36.tar.gz rogue36-interix.tar.gz
+
+dist.cygwin:
+	make clean
+	make rogue
+	tar cf rogue36.tar rogue rogue.6 rogue.r
+	gzip rogue36.tar
+	mv rogue36.tar.gz rogue36-cygwin.tar.gz
 	
 dist.djgpp:
 	del *.o 
 	del rogue.exe
-	make CRLIB=-lcurso LDFLAGS=-L$(DJDIR)/LIB CFLAGS="-DUSE_DJGPP -g -O2 -DDUMP" rogue.exe
+	make CRLIB=-lpdcurses LDFLAGS=-L$(DJDIR)/LIB CFLAGS="-g -O2 -DDUMP" rogue.exe
 	zip rogue36.zip rogue.exe rogue.6 rogue.r
 
