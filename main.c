@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <pwd.h>
+#include <fcntl.h>
 #include "mach_dep.h"
 #include "rogue.h"
 
@@ -37,6 +38,10 @@ char **envp;
     register struct object *obj;
     int lowtime;
     time_t now;
+
+#ifdef USE_DJGPP
+    _fmode = O_BINARY;
+#endif
 
     /*
      * check for print-score option
@@ -281,14 +286,20 @@ setup()
     signal(SIGHUP, auto_save);
     signal(SIGILL, auto_save);
     signal(SIGTRAP, auto_save);
+#ifdef SIGIOT
     signal(SIGIOT, auto_save);
+#endif
 #ifdef SIGEMT
     signal(SIGEMT, auto_save);
 #endif
     signal(SIGFPE, auto_save);
+#ifdef SIGBUS
     signal(SIGBUS, auto_save);
+#endif
     signal(SIGSEGV, auto_save);
+#ifdef SIGSYS
     signal(SIGSYS, auto_save);
+#endif
     signal(SIGPIPE, auto_save);
     signal(SIGTERM, auto_save);
 #endif

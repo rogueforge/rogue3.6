@@ -6,7 +6,11 @@
 /*
  * where scorefile should live
  */
-#define SCOREFILE	"/usr/games/lib/rogue_roll"
+#ifdef USE_DJGPP
+#define SCOREFILE "C:\\GAMES\\ROGUE36\\ROGUE36.SCR"
+#else
+#define SCOREFILE	"/usr/local/games/rogue36/rogue36.scr"
+#endif
 
 /*
  * Variables for checking to make sure the system isn't too loaded

@@ -120,12 +120,7 @@ int ch;
 int
 readchar()
 {
-    char c;
-
-    fflush(stdout);
-    while (read(0, &c, 1) < 0)
-	continue;
-    return c;
+    return( wgetch(cw) );
 }
 
 #if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H) && !defined(unctrl)
