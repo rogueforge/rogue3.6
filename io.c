@@ -7,6 +7,8 @@
 #include "curses.h"
 #include <ctype.h>
 #include <stdarg.h>
+#include <string.h>
+#include <unistd.h>
 #include "rogue.h"
 
 /*
@@ -18,6 +20,7 @@ static char msgbuf[BUFSIZ];
 static int newpos = 0;
 
 /*VARARGS1*/
+void
 msg(char *fmt, ...)
 {
     va_list ap;
@@ -43,6 +46,7 @@ msg(char *fmt, ...)
 /*
  * add things to the current message
  */
+int
 addmsg(char *fmt, ...)
 {
     va_list ap;
@@ -56,6 +60,7 @@ addmsg(char *fmt, ...)
  * Display a new msg (giving him a chance to see the previous one if it
  * is up there with the --More--)
  */
+int
 endmsg()
 {
     strcpy(huh, msgbuf);
@@ -73,6 +78,7 @@ endmsg()
     draw(cw);
 }
 
+int
 doadd(fmt, args)
 char *fmt;
 va_list args;
@@ -89,7 +95,9 @@ va_list args;
  *	returns true if it is ok to step on ch
  */
 
+int
 step_ok(ch)
+int ch;
 {
     switch (ch)
     {
@@ -109,6 +117,7 @@ step_ok(ch)
  *	getchar.
  */
 
+int
 readchar()
 {
     char c;
@@ -140,6 +149,7 @@ char ch;
  *	Display the important stats line.  Keep the cursor where it was.
  */
 
+void
 status()
 {
     register int oy, ox, temp;
@@ -191,7 +201,7 @@ status()
     mvwaddstr(cw, LINES - 1, 0, buf);
     switch (hungry_state)
     {
-	when 0: ;
+	case 0: ;
 	when 1:
 	    waddstr(cw, "  Hungry");
 	when 2:
@@ -209,6 +219,7 @@ status()
  *	Sit around until the guy types the right key
  */
 
+int
 wait_for(ch)
 register char ch;
 {
@@ -227,6 +238,7 @@ register char ch;
  *	function used to display a window and wait before returning
  */
 
+int
 show_win(scr, message)
 register WINDOW *scr;
 char *message;

@@ -7,8 +7,11 @@
 
 #include "curses.h"
 #include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
 #include "rogue.h"
 
+void
 read_scroll()
 {
     register struct object *obj;
@@ -39,7 +42,7 @@ read_scroll()
 	cur_weapon = NULL;
     switch(obj->o_which)
     {
-	when S_CONFUSE:
+	case S_CONFUSE:
 	    /*
 	     * Scroll of monster confusion.  Give him that power.
 	     */
@@ -162,7 +165,8 @@ read_scroll()
 		    switch (nch = ch = mvwinch(hw, i, j))
 		    {
 			case SECRETDOOR:
-			    mvaddch(i, j, nch = DOOR);
+			    nch = DOOR;
+			    mvaddch(i, j, nch);
 			case '-':
 			case '|':
 			case DOOR:

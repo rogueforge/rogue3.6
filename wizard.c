@@ -8,6 +8,8 @@
 
 #include "curses.h"
 #include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
 #include "rogue.h"
 
 /*
@@ -15,6 +17,7 @@
  *	What a certin object is
  */
 
+void
 whatis()
 {
     register struct object *obj;
@@ -25,7 +28,7 @@ whatis()
     obj = (struct object *) ldata(item);
     switch (obj->o_type)
     {
-        when SCROLL:
+        case SCROLL:
 	    s_know[obj->o_which] = TRUE;
 	    if (s_guess[obj->o_which])
 	    {
@@ -67,6 +70,7 @@ whatis()
  *	Wizard command for getting anything he wants
  */
 
+int
 create_obj()
 {
     register struct linked_list *item;
@@ -131,6 +135,7 @@ create_obj()
  *	Bamf the hero someplace else
  */
 
+int
 teleport()
 {
     register int rm;
@@ -167,6 +172,7 @@ teleport()
  *	see if user knows password
  */
 
+int
 passwd()
 {
     register char *sp, c;

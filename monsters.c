@@ -20,6 +20,7 @@ static char *wand_mons = "KJBSH AOZG CRQ Y W IXU V  ";
  *	the meaner the monster.
  */
 
+int
 randmonster(wander)
 bool wander;
 {
@@ -43,6 +44,7 @@ bool wander;
  *	Pick a new monster and add it to the list
  */
 
+int
 new_monster(item, type, cp)
 struct linked_list *item;
 char type;
@@ -78,7 +80,7 @@ register coord *cp;
 	else
 	    switch (rnd(level > 25 ? 9 : 8))
 	    {
-		when 0: mch = GOLD;
+		case 0: mch = GOLD;
 		when 1: mch = POTION;
 		when 2: mch = SCROLL;
 		when 3: mch = STAIRS;
@@ -97,6 +99,7 @@ register coord *cp;
  *	A wandering monster has awakened and is headed for the player
  */
 
+void
 wanderer()
 {
     register int i, ch;
@@ -188,6 +191,7 @@ int y, x;
     return it;
 }
 
+void
 genocide()
 {
     register struct linked_list *ip;

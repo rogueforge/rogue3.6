@@ -3,9 +3,12 @@
  * Function(s) for dealing with potions
  */
 
+#include <stdlib.h>
+#include <string.h>
 #include "curses.h"
 #include "rogue.h"
 
+void
 quaff()
 {
     register struct object *obj;
@@ -36,7 +39,7 @@ quaff()
      */
     switch(obj->o_which)
     {
-	when P_CONFUSE:
+	case P_CONFUSE:
 	    if (off(player, ISHUH))
 	    {
 		msg("Wait, what's going on here. Huh? What? Who?");

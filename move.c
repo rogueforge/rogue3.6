@@ -19,8 +19,9 @@ coord nh;
  *	Start the hero running
  */
 
+int
 do_run(ch)
-char ch;
+int ch;
 {
     running = TRUE;
     after = FALSE;
@@ -33,6 +34,7 @@ char ch;
  * consequences (fighting, picking up, etc.)
  */
 
+void
 do_move(dy, dx)
 int dy, dx;
 {
@@ -131,6 +133,7 @@ move_stuff:
  * If it is dark, remove anything that might move.
  */
 
+int
 light(cp)
 coord *cp;
 {
@@ -175,7 +178,7 @@ coord *cp;
 		    rch = mvwinch(cw, rp->r_pos.y+j, rp->r_pos.x+k);
 		    switch (rch)
 		    {
-			when DOOR:
+			case DOOR:
 			case STAIRS:
 			case TRAP:
 			case '|':
@@ -199,6 +202,7 @@ coord *cp;
  *	returns what a certain thing will display as to the un-initiated
  */
 
+int
 show(y, x)
 register int y, x;
 {
@@ -229,6 +233,7 @@ register int y, x;
  *	The guy stepped on a trap.... Make him pay.
  */
 
+int
 be_trapped(tc)
 register coord *tc;
 {
@@ -241,7 +246,7 @@ register coord *tc;
     tp->tr_flags |= ISFOUND;
     switch (ch = tp->tr_type)
     {
-	when TRAPDOOR:
+	case TRAPDOOR:
 	    level++;
 	    new_level();
 	    msg("You fell into a trap!");
@@ -313,8 +318,11 @@ register int y, x;
     for (tp = traps; tp < ep; tp++)
 	if (tp->tr_pos.y == y && tp->tr_pos.x == x)
 	    break;
-    if (tp == ep)
-	debug(sprintf(prbuf, "Trap at %d,%d not in array", y, x));
+    if (tp == ep) 
+    {
+	sprintf(prbuf, "Trap at %d,%d not in array", y, x);
+	debug(prbuf);
+    }
     return tp;
 }
 

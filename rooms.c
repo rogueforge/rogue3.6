@@ -4,9 +4,11 @@
  * @(#)rooms.c	3.8 (Berkeley) 6/15/81
  */
 
+#include <stdlib.h>
 #include "curses.h"
 #include "rogue.h"
 
+int
 do_rooms()
 {
     register int i;
@@ -107,6 +109,7 @@ do_rooms()
  * Draw a box around a room
  */
 
+int
 draw_room(rp)
 register struct room *rp;
 {
@@ -140,6 +143,7 @@ register struct room *rp;
  *	draw a horizontal line
  */
 
+int
 horiz(cnt)
 register int cnt;
 {
@@ -152,6 +156,7 @@ register int cnt;
  *	draw a vertical line
  */
 
+int
 vert(cnt)
 register int cnt;
 {
@@ -170,6 +175,7 @@ register int cnt;
  *	pick a random spot in a room
  */
 
+int
 rnd_pos(rp, cp)
 register struct room *rp;
 register coord *cp;

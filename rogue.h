@@ -259,6 +259,20 @@
  */
 
 /*
+ * Delayed actions
+ *
+ */
+
+struct delayed_action {
+    int d_type;
+    void (*d_func)();
+    int d_arg;
+    int d_time;
+};
+
+extern struct delayed_action d_list[];
+
+/*
  * Help list
  */
 
@@ -288,7 +302,7 @@ typedef struct {
 struct linked_list {
     struct linked_list *l_next;
     struct linked_list *l_prev;
-    char *l_data;			/* Various structure pointers */
+    void *l_data;			/* Various structure pointers */
 };
 
 /*
@@ -321,7 +335,9 @@ struct trap {
     coord tr_pos;			/* Where trap is */
     char tr_type;			/* What kind of trap */
     int tr_flags;			/* Info about trap (i.e. ISFOUND) */
-} traps[MAXTRAPS];
+};
+
+extern struct trap  traps[MAXTRAPS];
 
 /*
  * Structure describing a fighting being
@@ -384,112 +400,271 @@ struct object {
  * Now all the global variables
  */
 
-struct room rooms[MAXROOMS];		/* One for each room -- A level */
-struct room *oldrp;			/* Roomin(&oldpos) */
-struct linked_list *mlist;		/* List of monsters on the level */
-struct thing player;			/* The rogue */
-struct stats max_stats;			/* The maximum for the player */
-struct monster monsters[26];		/* The initial monster states */
-struct linked_list *lvl_obj;		/* List of objects on this level */
-struct object *cur_weapon;		/* Which weapon he is weilding */
-struct object *cur_armor;		/* What a well dresssed rogue wears */
-struct object *cur_ring[2];		/* Which rings are being worn */
-struct magic_item things[NUMTHINGS];	/* Chances for each type of item */
-struct magic_item s_magic[MAXSCROLLS];	/* Names and chances for scrolls */
-struct magic_item p_magic[MAXPOTIONS];	/* Names and chances for potions */
-struct magic_item r_magic[MAXRINGS];	/* Names and chances for rings */
-struct magic_item ws_magic[MAXSTICKS];	/* Names and chances for sticks */
+extern struct room rooms[MAXROOMS];		/* One for each room -- A level */
+extern struct room *oldrp;			/* Roomin(&oldpos) */
+extern struct linked_list *mlist;		/* List of monsters on the level */
+extern struct thing player;			/* The rogue */
+extern struct stats max_stats;			/* The maximum for the player */
+extern struct monster monsters[26];		/* The initial monster states */
+extern struct linked_list *lvl_obj;		/* List of objects on this level */
+extern struct object *cur_weapon;		/* Which weapon he is weilding */
+extern struct object *cur_armor;		/* What a well dresssed rogue wears */
+extern struct object *cur_ring[2];		/* Which rings are being worn */
+extern struct magic_item things[NUMTHINGS];	/* Chances for each type of item */
+extern struct magic_item s_magic[MAXSCROLLS];	/* Names and chances for scrolls */
+extern struct magic_item p_magic[MAXPOTIONS];	/* Names and chances for potions */
+extern struct magic_item r_magic[MAXRINGS];	/* Names and chances for rings */
+extern struct magic_item ws_magic[MAXSTICKS];	/* Names and chances for sticks */
 
-int level;				/* What level rogue is on */
-int purse;				/* How much gold the rogue has */
-int mpos;				/* Where cursor is on top line */
-int ntraps;				/* Number of traps on this level */
-int no_move;				/* Number of turns held in place */
-int no_command;				/* Number of turns asleep */
-int inpack;				/* Number of things in pack */
-int max_hp;				/* Player's max hit points */
-int total;				/* Total dynamic memory bytes */
-int a_chances[MAXARMORS];		/* Probabilities for armor */
-int a_class[MAXARMORS];			/* Armor class for various armors */
-int lastscore;				/* Score before this turn */
-int no_food;				/* Number of levels without food */
-int seed;				/* Random number seed */
-int count;				/* Number of times to repeat command */
-int dnum;				/* Dungeon number */
-int fung_hit;				/* Number of time fungi has hit */
-int quiet;				/* Number of quiet turns */
-int max_level;				/* Deepest player has gone */
-int food_left;				/* Amount of food in hero's stomach */
-int group;				/* Current group number */
-int hungry_state;			/* How hungry is he */
+extern int level;				/* What level rogue is on */
+extern int purse;				/* How much gold the rogue has */
+extern int mpos;				/* Where cursor is on top line */
+extern int ntraps;				/* Number of traps on this level */
+extern int no_move;				/* Number of turns held in place */
+extern int no_command;				/* Number of turns asleep */
+extern int inpack;				/* Number of things in pack */
+extern int max_hp;				/* Player's max hit points */
+extern int total;				/* Total dynamic memory bytes */
+extern int a_chances[MAXARMORS];		/* Probabilities for armor */
+extern int a_class[MAXARMORS];			/* Armor class for various armors */
+extern int lastscore;				/* Score before this turn */
+extern int no_food;				/* Number of levels without food */
+extern int seed;				/* Random number seed */
+extern int count;				/* Number of times to repeat command */
+extern int dnum;				/* Dungeon number */
+extern int fung_hit;				/* Number of time fungi has hit */
+extern int quiet;				/* Number of quiet turns */
+extern int max_level;				/* Deepest player has gone */
+extern int food_left;				/* Amount of food in hero's stomach */
+extern int group;				/* Current group number */
+extern int hungry_state;			/* How hungry is he */
 
-char take;				/* Thing the rogue is taking */
-char prbuf[80];				/* Buffer for sprintfs */
-char outbuf[BUFSIZ];			/* Output buffer for stdout */
-char runch;				/* Direction player is running */
-char *s_names[MAXSCROLLS];		/* Names of the scrolls */
-char *p_colors[MAXPOTIONS];		/* Colors of the potions */
-char *r_stones[MAXRINGS];		/* Stone settings of the rings */
-char *w_names[MAXWEAPONS];		/* Names of the various weapons */
-char *a_names[MAXARMORS];		/* Names of armor types */
-char *ws_made[MAXSTICKS];		/* What sticks are made of */
-char *release;				/* Release number of rogue */
-char whoami[80];			/* Name of player */
-char fruit[80];				/* Favorite fruit */
-char huh[80];				/* The last message printed */
-char *s_guess[MAXSCROLLS];		/* Players guess at what scroll is */
-char *p_guess[MAXPOTIONS];		/* Players guess at what potion is */
-char *r_guess[MAXRINGS];		/* Players guess at what ring is */
-char *ws_guess[MAXSTICKS];		/* Players guess at what wand is */
-char *ws_type[MAXSTICKS];		/* Is it a wand or a staff */
-char file_name[80];			/* Save file name */
-char home[80];				/* User's home directory */
+extern char take;				/* Thing the rogue is taking */
+extern char prbuf[100];			/* Buffer for sprintfs */
+extern char outbuf[BUFSIZ];			/* Output buffer for stdout */
+extern char runch;				/* Direction player is running */
+extern char *s_names[MAXSCROLLS];		/* Names of the scrolls */
+extern char *p_colors[MAXPOTIONS];		/* Colors of the potions */
+extern char *r_stones[MAXRINGS];		/* Stone settings of the rings */
+extern char *w_names[MAXWEAPONS];		/* Names of the various weapons */
+extern char *a_names[MAXARMORS];		/* Names of armor types */
+extern char *ws_made[MAXSTICKS];		/* What sticks are made of */
+extern char *release;				/* Release number of rogue */
+extern char whoami[80];			/* Name of player */
+extern char fruit[80];				/* Favorite fruit */
+extern char huh[80];				/* The last message printed */
+extern char *s_guess[MAXSCROLLS];		/* Players guess at what scroll is */
+extern char *p_guess[MAXPOTIONS];		/* Players guess at what potion is */
+extern char *r_guess[MAXRINGS];		/* Players guess at what ring is */
+extern char *ws_guess[MAXSTICKS];		/* Players guess at what wand is */
+extern char *ws_type[MAXSTICKS];		/* Is it a wand or a staff */
+extern char file_name[80];			/* Save file name */
+extern char home[80];				/* User's home directory */
 
-WINDOW *cw;				/* Window that the player sees */
-WINDOW *hw;				/* Used for the help command */
-WINDOW *mw;				/* Used to store mosnters */
+extern WINDOW *cw;				/* Window that the player sees */
+extern WINDOW *hw;				/* Used for the help command */
+extern WINDOW *mw;				/* Used to store mosnters */
 
-bool running;				/* True if player is running */
-bool playing;				/* True until he quits */
-bool wizard;				/* True if allows wizard commands */
-bool after;				/* True if we want after daemons */
-bool notify;				/* True if player wants to know */
-bool fight_flush;			/* True if toilet input */
-bool terse;				/* True if we should be short */
-bool door_stop;				/* Stop running when we pass a door */
-bool jump;				/* Show running as series of jumps */
-bool slow_invent;			/* Inventory one line at a time */
-bool firstmove;				/* First move after setting door_stop */
-bool waswizard;				/* Was a wizard sometime */
-bool askme;				/* Ask about unidentified things */
-bool s_know[MAXSCROLLS];		/* Does he know what a scroll does */
-bool p_know[MAXPOTIONS];		/* Does he know what a potion does */
-bool r_know[MAXRINGS];			/* Does he know what a ring does */
-bool ws_know[MAXSTICKS];		/* Does he know what a stick does */
-bool amulet;				/* He found the amulet */
-bool in_shell;				/* True if executing a shell */
+extern bool running;				/* True if player is running */
+extern bool playing;				/* True until he quits */
+extern bool wizard;				/* True if allows wizard commands */
+extern bool after;				/* True if we want after daemons */
+extern bool notify;				/* True if player wants to know */
+extern bool fight_flush;			/* True if toilet input */
+extern bool terse;				/* True if we should be short */
+extern bool door_stop;				/* Stop running when we pass a door */
+extern bool jump;				/* Show running as series of jumps */
+extern bool slow_invent;			/* Inventory one line at a time */
+extern bool firstmove;				/* First move after setting door_stop */
+extern bool waswizard;				/* Was a wizard sometime */
+extern bool askme;				/* Ask about unidentified things */
+extern bool s_know[MAXSCROLLS];		/* Does he know what a scroll does */
+extern bool p_know[MAXPOTIONS];		/* Does he know what a potion does */
+extern bool r_know[MAXRINGS];			/* Does he know what a ring does */
+extern bool ws_know[MAXSTICKS];		/* Does he know what a stick does */
+extern bool amulet;				/* He found the amulet */
+extern bool in_shell;				/* True if executing a shell */
 
-coord oldpos;				/* Position before last look() call */
-coord delta;				/* Change indicated to get_dir() */
+extern coord oldpos;				/* Position before last look() call */
+extern coord delta;				/* Change indicated to get_dir() */
 
-struct linked_list *find_mons(), *find_obj(), *get_item(), *new_item();
-struct linked_list *new_thing(), *wake_monster();
+extern coord ch_ret;
+extern char countch,direction,newcount;
+extern struct delayed_action d_list[20];
+extern int between;
+extern int num_checks;
+extern coord nh;
 
-char *malloc(), *getenv(), *tr_name(), *new();
-char *vowelstr(), *inv_name(), *strcpy(), *strcat(), *sbrk(), *brk();
-char *ctime(), *num(), *ring_num();
+extern struct linked_list *find_mons(), *find_obj(), *get_item(), *new_item();
+extern struct linked_list *new_thing(), *wake_monster();
 
-struct room *roomin();
+extern char *tr_name(), *new();
+extern char *vowelstr(), *inv_name();
+extern char *num(), *ring_num();
 
-coord *rndmove();
+extern struct room *roomin();
 
-int auto_save(), endit(), nohaste(), doctor(), runners(), swander();
-int tstp(), unconfuse(), unsee(), rollwand(), stomach(), sight();
+extern coord *rndmove();
 
 #ifdef CHECKTIME
-int checkout();
+extern void checkout(int);
 #endif
 
-long lseek();
+extern struct trap *trap_at();
 
-struct trap *trap_at();
+extern int do_daemons(int);
+extern int do_fuses(int);
+extern int pack_char(struct object *);
+extern void take_off();
+extern int dropcheck(struct object *);
+extern int waste_time();
+extern void wear();
+extern void msg(char *, ...);
+extern int addmsg(char *, ...);
+extern int endmsg();
+extern int rnd(int);
+extern int diag_ok(coord *, coord *);
+extern int cansee(int, int);
+extern int step_ok(int);
+extern void do_chase(struct thing *);
+extern int chase(struct thing *, coord *);
+extern int attack(struct thing *);
+extern void call();
+extern void endit(int);
+extern int get_str(char *, WINDOW *);
+extern int command();
+extern int total_winner();
+extern void u_level();
+extern void identify();
+extern int wait_for(int);
+extern void help();
+extern void search();
+extern void score(int, int, int);
+extern int add_pass();
+extern int teleport();
+extern int init_weapon(struct object *, int);
+extern int raise_level();
+extern void add_pack(struct linked_list *, int);
+extern void quit(int);
+extern int pick_up(int);
+extern void do_zap(int);
+extern int save_game();
+extern int create_obj();
+extern void whatis();
+extern void read_scroll();
+extern void genocide();
+extern void eat();
+extern void ring_on();
+extern void ring_off();
+extern int option();
+extern void wield();
+extern int look(int);
+extern void status();
+extern int readchar();
+extern int shell();
+extern void do_move(int, int);
+extern int do_run(int);
+extern int get_dir();
+extern void missile(int, int);
+extern int inventory(struct linked_list *, int);
+extern void picky_inven();
+extern void drop();
+extern void quaff();
+extern int d_level();
+extern int passwd();
+extern int show_win(WINDOW *, char *);
+extern int new_level();
+extern int ring_eat(int);
+extern int light(coord *);
+extern void extinguish(void (*)());
+extern int start_daemon(void (*)(), int, int);
+extern int roll(int, int);
+extern void kill_daemon(void (*)());
+extern int fuse(void (*)(), int, int, int);
+extern int runto(coord *, coord *);
+extern int roll_em(struct stats *, struct stats *, struct object *, int);
+extern int thunk(struct object *, char *);
+extern int hit(char *, char *);
+extern int miss(char *, char *);
+extern int bounce(struct object *, char *);
+extern int killed(struct linked_list *, int);
+extern int death(int);
+extern void chg_str(int);
+extern int remove_monster(coord *, struct linked_list *);
+extern void fall(struct linked_list *, int);
+extern int fallpos(coord *, coord *, int);
+extern int save(int);
+extern int _detach(struct linked_list **, struct linked_list *);
+extern int discard(struct linked_list *);
+extern int is_magic(struct object *);
+extern int add_dam(str_t *);
+extern int str_plus(str_t *);
+extern void badcheck(char *, struct magic_item *, int);
+extern int doadd(char *, va_list);
+extern int step_ok(int);
+extern int fatal(char *);
+extern void tstp(int);
+extern void auto_save(int);
+extern int strucpy(char *, char *, int);
+extern int restore(char *, char **);
+extern int parse_opts(char *);
+extern int init_player();
+extern int init_things();
+extern int init_colors();
+extern int setup();
+extern int playit();
+extern int init_materials();
+extern int init_names();
+extern int init_stones();
+extern void stomach();
+extern void runners();
+extern void doctor();
+extern int show(int, int);
+extern int secretdoor(int, int);
+extern int check_level();
+extern int rnd_pos(struct room *, coord *);
+extern int rnd_room();
+extern void wanderer();
+extern int _attach(struct linked_list **, struct linked_list *);
+extern void lengthen(void (*)(), int);
+extern int be_trapped(coord *);
+extern int fight(coord *, int, struct object *, int);
+extern int swing(int, int, int);
+extern void put_things();
+extern int do_rooms();
+extern int do_passages();
+extern int _free_list(struct linked_list **);
+extern void money();
+extern int conn(int, int);
+extern int door(struct room *, coord *);
+extern void sight();
+extern int add_haste(int);
+extern void unconfuse();
+extern int is_current(struct object *);
+extern int gethand();
+extern int aggravate();
+extern int encwrite(char *, unsigned int, FILE *);
+extern int encread(char *, unsigned int, int);
+extern int draw_room(struct room *);
+extern int new_monster(struct linked_list *, int, coord *);
+extern int randmonster(int);
+extern int vert(int);
+extern int horiz(int);
+extern int save_file(FILE *);
+extern void drain(int, int, int, int);
+extern int save_throw(int, struct thing *);
+extern int hit_monster(int, int, struct object *);
+extern int do_motion(struct object *, int, int);
+extern int pick_one(struct magic_item *, int);
+extern int fix_stick(struct object *);
+extern char *charge_str(struct object *);
+extern void rollwand();
+extern void nohaste();
+extern void swander();
+extern void unsee();
+extern int too_much();
+extern int author();
+extern void chmsg(char *fmt, ...);
+#ifdef MAXLOAD
+extern int loadav(double *);
+#endif

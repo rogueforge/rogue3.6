@@ -6,6 +6,8 @@
 
 #include "curses.h"
 #include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
 #include "rogue.h"
 
 long e_levels[] = {
@@ -17,6 +19,7 @@ long e_levels[] = {
  *	The player attacks the monster.
  */
 
+int
 fight(mp, mn, weap, thrown)
 register coord *mp;
 char mn;
@@ -89,6 +92,7 @@ bool thrown;
  *	The monster attacks the player
  */
 
+int
 attack(mp)
 register struct thing *mp;
 {
@@ -115,7 +119,7 @@ register struct thing *mp;
 	if (off(*mp, ISCANC))
 	    switch (mp->t_type)
 	    {
-		when 'R':
+		case 'R':
 		    /*
 		     * If a rust monster hits, you lose armor
 		     */
@@ -284,6 +288,7 @@ register struct thing *mp;
  *	returns true if the swing hits
  */
 
+int
 swing(at_lvl, op_arm, wplus)
 int at_lvl, op_arm, wplus;
 {
@@ -298,6 +303,7 @@ int at_lvl, op_arm, wplus;
  *	Check to see if the guy has gone up a level.
  */
 
+int
 check_level()
 {
     register int i, add;
@@ -322,6 +328,7 @@ check_level()
  *	Roll several attacks
  */
 
+int
 roll_em(att, def, weap, hurl)
 struct stats *att, *def;
 struct object *weap;
@@ -331,7 +338,6 @@ bool hurl;
     register int ndice, nsides, def_arm;
     register bool did_hit = FALSE;
     register int prop_hplus, prop_dplus;
-    char *index();
 
     prop_hplus = prop_dplus = 0;
     if (weap == NULL)
@@ -377,7 +383,7 @@ bool hurl;
 		hplus += cur_ring[RIGHT]->o_ac;
 	}
 	ndice = atoi(cp);
-	if ((cp = index(cp, 'd')) == NULL)
+	if ((cp = strchr(cp, 'd')) == NULL)
 	    break;
 	nsides = atoi(++cp);
 	if (def == &pstats)
@@ -404,7 +410,7 @@ bool hurl;
 	    def->s_hpt -= max(0, damage);
 	    did_hit = TRUE;
 	}
-	if ((cp = index(cp, '/')) == NULL)
+	if ((cp = strchr(cp, '/')) == NULL)
 	    break;
 	cp++;
     }
@@ -443,6 +449,7 @@ bool upper;
  *	Print a message to indicate a succesful hit
  */
 
+int
 hit(er, ee)
 register char *er, *ee;
 {
@@ -454,7 +461,7 @@ register char *er, *ee;
     else
 	switch (rnd(4))
 	{
-	    when 0: s = " scored an excellent hit on ";
+	    case 0: s = " scored an excellent hit on ";
 	    when 1: s = " hit ";
 	    when 2: s = (er == 0 ? " have injured " : " has injured ");
 	    when 3: s = (er == 0 ? " swing and hit " : " swings and hits ");
@@ -470,6 +477,7 @@ register char *er, *ee;
  *	Print a message to indicate a poor swing
  */
 
+int
 miss(er, ee)
 register char *er, *ee;
 {
@@ -478,7 +486,7 @@ register char *er, *ee;
     addmsg(prname(er, TRUE));
     switch (terse ? 0 : rnd(4))
     {
-	when 0: s = (er == 0 ? " miss" : " misses");
+	case 0: s = (er == 0 ? " miss" : " misses");
 	when 1: s = (er == 0 ? " swing and miss" : " swings and misses");
 	when 2: s = (er == 0 ? " barely miss" : " barely misses");
 	when 3: s = (er == 0 ? " don't hit" : " doesn't hit");
@@ -493,6 +501,7 @@ register char *er, *ee;
  * save_throw:
  *	See if a creature save against something
  */
+int
 save_throw(which, tp)
 int which;
 struct thing *tp;
@@ -507,6 +516,7 @@ struct thing *tp;
  *	See if he saves against various nasty things
  */
 
+int
 save(which)
 int which;
 {
@@ -518,6 +528,7 @@ int which;
  *	compute bonus/penalties for strength on the "to hit" roll
  */
 
+int
 str_plus(str)
 register str_t *str;
 {
@@ -540,6 +551,7 @@ register str_t *str;
  *	compute additional damage done for exceptionally high or low strength
  */
 
+ int
  add_dam(str)
  register str_t *str;
  {
@@ -567,6 +579,7 @@ register str_t *str;
  *	The guy just magically went up a level.
  */
 
+int
 raise_level()
 {
     pstats.s_exp = e_levels[pstats.s_lvl-1] + 1L;
@@ -578,6 +591,7 @@ raise_level()
  *	A missile hits a monster
  */
 
+int
 thunk(weap, mname)
 register struct object *weap;
 register char *mname;
@@ -593,6 +607,7 @@ register char *mname;
  *	A missile misses a monster
  */
 
+int
 bounce(weap, mname)
 register struct object *weap;
 register char *mname;
@@ -606,6 +621,7 @@ register char *mname;
 /*
  * remove a monster from the screen
  */
+int
 remove_monster(mp, item)
 register coord *mp;
 register struct linked_list *item;
@@ -621,6 +637,7 @@ register struct linked_list *item;
  *	Returns true if an object radiates magic
  */
 
+int
 is_magic(obj)
 register struct object *obj;
 {
@@ -645,6 +662,7 @@ register struct object *obj;
  *	Called to put a monster to death
  */
 
+int
 killed(item, pr)
 register struct linked_list *item;
 bool pr;
@@ -675,7 +693,7 @@ bool pr;
      */
     switch (tp->t_type)
     {
-	when 'F':
+	case 'F':
 	    player.t_flags &= ~ISHELD;
 	    fung_hit = 0;
 	    strcpy(monsters['F'-'A'].m_stats.s_dmg, "000d0");

@@ -21,7 +21,7 @@ char ch;
 
     switch (ch)
     {
-	when TRAPDOOR:
+	case TRAPDOOR:
 	    s = terse ? "A trapdoor." : "You found a trapdoor.";
 	when BEARTRAP:
 	    s = terse ? "A beartrap." : "You found a beartrap.";
@@ -42,6 +42,7 @@ char ch;
  *	A quick glance all around the player
  */
 
+int
 look(wakeup)
 bool wakeup;
 {
@@ -108,7 +109,7 @@ bool wakeup;
 	    {
 		switch (runch)
 		{
-		    when 'h':
+		    case 'h':
 			if (x == ex)
 			    continue;
 		    when 'j':
@@ -167,6 +168,7 @@ bool wakeup;
  *	Figure out what a secret door looks like.
  */
 
+int
 secretdoor(y, x)
 register int y, x;
 {
@@ -207,7 +209,8 @@ int x;
 	if (op->o_pos.y == y && op->o_pos.x == x)
 		return obj;
     }
-    debug(sprintf(prbuf, "Non-object %d,%d", y, x));
+    sprintf(prbuf, "Non-object %d,%d", y, x);
+    debug(prbuf);
     return NULL;
 }
 
@@ -216,6 +219,7 @@ int x;
  *	She wants to eat something, so let her try
  */
 
+void
 eat()
 {
     register struct linked_list *item;
@@ -261,6 +265,7 @@ eat()
  * it keeps track of the highest it has been, just in case
  */
 
+void
 chg_str(amt)
 register int amt;
 {
@@ -315,6 +320,7 @@ register int amt;
  *	add a haste to the player
  */
 
+int
 add_haste(potion)
 bool potion;
 {
@@ -337,6 +343,7 @@ bool potion;
  *	aggravate all the monsters on this level
  */
 
+int
 aggravate()
 {
     register struct linked_list *mi;
@@ -368,6 +375,7 @@ register char *str;
 /* 
  * see if the object is one of the currently used items
  */
+int
 is_current(obj)
 register struct object *obj;
 {
@@ -385,6 +393,7 @@ register struct object *obj;
 /*
  * set up the direction co_ordinate for use in varios "prefix" commands
  */
+int
 get_dir()
 {
     register char *prompt;
@@ -399,7 +408,7 @@ get_dir()
 	gotit = TRUE;
 	switch (readchar())
 	{
-	    when 'h': case'H': delta.y =  0; delta.x = -1;
+	    case 'h': case'H': delta.y =  0; delta.x = -1;
 	    when 'j': case'J': delta.y =  1; delta.x =  0;
 	    when 'k': case'K': delta.y = -1; delta.x =  0;
 	    when 'l': case'L': delta.y =  0; delta.x =  1;

@@ -10,6 +10,11 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include <errno.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <time.h>
 #include "rogue.h"
 
 typedef struct stat STAT;
@@ -19,10 +24,9 @@ extern char version[], encstr[];
 extern bool _endwin;
 #endif
 
-char *sbrk();
-
 STAT sbuf;
 
+int
 save_game()
 {
     register FILE *savef;
@@ -61,7 +65,7 @@ save_game()
 	strcpy(file_name, buf);
 gotfile:
 	if ((savef = fopen(file_name, "w")) == NULL)
-	    msg(sys_errlist[errno]);	/* fake perror() */
+	    msg(strerror(errno));	/* fake perror() */
     } while (savef == NULL);
 
     /*
@@ -76,7 +80,9 @@ gotfile:
  * automatically save a file.  This is used if a HUP signal is
  * recieved
  */
-auto_save()
+void
+auto_save(signum)
+int signum;
 {
     register FILE *savef;
     register int i;
@@ -91,6 +97,7 @@ auto_save()
 /*
  * write the saved game on the file
  */
+int
 save_file(savef)
 register FILE *savef;
 {
@@ -102,10 +109,11 @@ register FILE *savef;
 #if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H)
     _endwin = TRUE;
 #endif
-    encwrite(version, sbrk(0) - version, savef);
+    encwrite(version, (char *) sbrk(0) - version, savef);
     fclose(savef);
 }
 
+int
 restore(file, envp)
 register char *file;
 char **envp;
@@ -197,6 +205,7 @@ char **envp;
 /*
  * perform an encrypted write
  */
+int
 encwrite(start, size, outf)
 register char *start;
 unsigned int size;
@@ -217,6 +226,7 @@ register FILE *outf;
 /*
  * perform an encrypted read
  */
+int
 encread(start, size, inf)
 register char *start;
 unsigned int size;

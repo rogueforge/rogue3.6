@@ -7,6 +7,10 @@
 #include "curses.h"
 #include <ctype.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <sys/wait.h>
 #include "rogue.h"
 
 /*
@@ -14,6 +18,7 @@
  *	Process the user commands
  */
 
+int
 command()
 {
     register char ch;
@@ -94,7 +99,7 @@ command()
 	    }
 	    switch (ch)
 	    {
-		when 'f':
+		case 'f':
 		    if (!on(player, ISBLIND))
 		    {
 			door_stop = TRUE;
@@ -120,7 +125,7 @@ command()
 		count--;
 	    switch (ch)
 	    {
-		when '!' : shell();
+		case '!' : shell();
 		when 'h' : do_move(0, -1);
 		when 'j' : do_move(1, 0);
 		when 'k' : do_move(-1, 0);
@@ -142,7 +147,7 @@ command()
 			after = FALSE;
 		    else
 			missile(delta.y, delta.x);
-		when 'Q' : after = FALSE; quit();
+		when 'Q' : after = FALSE; quit(0);
 		when 'i' : after = FALSE; inventory(pack, 0);
 		when 'I' : after = FALSE; picky_inven();
 		when 'd' : drop();
@@ -193,6 +198,7 @@ command()
 			if (wizard = passwd())
 			{
 			    msg("You are suddenly as smart as Ken Arnold in dungeon #%d", dnum);
+			    wizard = TRUE;
 			    waswizard = TRUE;
 			}
 			else
@@ -206,7 +212,7 @@ command()
 		    after = FALSE;
 		    if (wizard) switch (ch)
 		    {
-			when '@' : msg("@ %d,%d", hero.y, hero.x);
+			case '@' : msg("@ %d,%d", hero.y, hero.x);
 			when 'C' : create_obj();
 			when CTRL('I') : inventory(lvl_obj, 0);
 			when CTRL('W') : whatis();
@@ -305,7 +311,9 @@ command()
  *	Have player make certain, then exit.
  */
 
-quit()
+void
+quit(signum)
+int signum;
 {
     /*
      * Reset the signal in case we got here via an interrupt
@@ -319,7 +327,7 @@ quit()
 	clear();
 	move(LINES-1, 0);
 	draw(stdscr);
-	score(purse, 1);
+	score(purse, 1, 0);
 	exit(0);
     }
     else
@@ -339,6 +347,7 @@ quit()
  *	Player gropes about him to find hidden things.
  */
 
+void
 search()
 {
     register int x, y;
@@ -387,6 +396,7 @@ search()
  *	Give single character help, or the whole mess if he wants it
  */
 
+void
 help()
 {
     register struct h_list *strp = helpstr;
@@ -446,6 +456,7 @@ help()
  *	Tell the player what a certain thing is.
  */
 
+void
 identify()
 {
     register char ch, *str;
@@ -491,6 +502,7 @@ identify()
  *	He wants to go down a level
  */
 
+int
 d_level()
 {
     if (winat(hero.y, hero.x) != STAIRS)
@@ -507,6 +519,7 @@ d_level()
  *	He wants to go up a level
  */
 
+void
 u_level()
 {
     if (winat(hero.y, hero.x) == STAIRS)
@@ -528,6 +541,7 @@ u_level()
  * Let him escape for a while
  */
 
+int
 shell()
 {
     register int pid;
@@ -554,16 +568,15 @@ shell()
 	/*
 	 * Set back to original user, just in case
 	 */
-	setuid(getuid());
-	setgid(getgid());
-	execl(sh == NULL ? "/bin/sh" : sh, "shell", "-i", 0);
+	if (setuid(getuid()) == 0)
+	    if (setgid(getgid()) == 0)
+		execl(sh == NULL ? "/bin/sh" : sh, "shell", "-i", NULL);
+
 	perror("No shelly");
 	exit(-1);
     }
     else
     {
-	int endit();
-
 	signal(SIGINT, SIG_IGN);
 	signal(SIGQUIT, SIG_IGN);
 	while (wait(&ret_status) != pid)
@@ -583,13 +596,13 @@ shell()
 /*
  * allow a user to call a potion, scroll, or ring something
  */
+void
 call()
 {
     register struct object *obj;
     register struct linked_list *item;
     register char **guess, *elsewise;
     register bool *know;
-    char *malloc();
 
     item = get_item("call", CALLABLE);
     /*
@@ -600,7 +613,7 @@ call()
     obj = (struct object *) ldata(item);
     switch (obj->o_type)
     {
-	when RING:
+	case RING:
 	    guess = r_guess;
 	    know = r_know;
 	    elsewise = (r_guess[obj->o_which] != NULL ?

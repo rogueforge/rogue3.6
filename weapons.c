@@ -50,6 +50,7 @@ static struct init_weps {
  *	Fire a missile in a given direction
  */
 
+void
 missile(ydelta, xdelta)
 int ydelta, xdelta;
 {
@@ -100,6 +101,7 @@ int ydelta, xdelta;
  * do the actual motion on the screen done by an object traveling
  * across the room
  */
+int
 do_motion(obj, ydelta, xdelta)
 register struct object *obj;
 register int ydelta, xdelta;
@@ -147,6 +149,7 @@ register int ydelta, xdelta;
  *	Drop an item someplace around here.
  */
 
+void
 fall(item, pr)
 register struct linked_list *item;
 bool pr;
@@ -178,6 +181,7 @@ bool pr;
  *	Set up the initial goodies for a weapon
  */
 
+int
 init_weapon(weap, type)
 register struct object *weap;
 char type;
@@ -202,6 +206,7 @@ char type;
  * Does the missile hit the monster
  */
 
+int
 hit_monster(y, x, obj)
 register int y, x;
 struct object *obj;
@@ -227,9 +232,13 @@ register int n1, n2;
     if (n1 == 0 && n2 == 0)
 	return "+0";
     if (n2 == 0)
-	return sprintf(numbuf, "%s%d", n1 < 0 ? "" : "+", n1);
-    return sprintf(numbuf, "%s%d,%s%d",
-				n1 < 0 ? "" : "+", n1, n2 < 0 ? "" : "+", n2);
+    {
+	sprintf(numbuf, "%s%d", n1 < 0 ? "" : "+", n1);
+	return numbuf;
+    }
+
+    sprintf(numbuf, "%s%d,%s%d", n1 < 0 ? "" : "+", n1, n2 < 0 ? "" : "+", n2);
+    return numbuf;
 }
 
 /*
@@ -237,6 +246,7 @@ register int n1, n2;
  *	Pull out a certain weapon
  */
 
+void
 wield()
 {
     register struct linked_list *item;
@@ -276,6 +286,7 @@ bad:
 /*
  * pick a random position around the give (y, x) coordinates
  */
+int
 fallpos(pos, newpos, passages)
 register coord *pos, *newpos;
 register bool passages;

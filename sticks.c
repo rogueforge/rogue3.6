@@ -7,8 +7,10 @@
 
 #include "curses.h"
 #include <ctype.h>
+#include <string.h>
 #include "rogue.h"
 
+int
 fix_stick(cur)
 register struct object *cur;
 {
@@ -21,7 +23,7 @@ register struct object *cur;
     cur->o_charges = 3 + rnd(5);
     switch (cur->o_which)
     {
-	when WS_HIT:
+	case WS_HIT:
 	    cur->o_hplus = 3;
 	    cur->o_dplus = 3;
 	    cur->o_damage = "1d8";
@@ -30,6 +32,7 @@ register struct object *cur;
     }
 }
 
+void
 do_zap(gotdir)
 bool gotdir;
 {
@@ -60,7 +63,7 @@ bool gotdir;
 	} while (delta.y == 0 && delta.x == 0);
     switch (obj->o_which)
     {
-	when WS_LIGHT:
+	case WS_LIGHT:
 	    /*
 	     * Reddy Kilowat wand.  Light up the room
 	     */
@@ -251,7 +254,7 @@ bool gotdir;
 
 	    switch (delta.y + delta.x)
 	    {
-		when 0: dirch = '/';
+		case 0: dirch = '/';
 		when 1: case -1: dirch = (delta.y == 0 ? '-' : '|');
 		when 2: case -2: dirch = '\\';
 	    }
@@ -336,6 +339,7 @@ bool gotdir;
  *	Do drain hit points from player shtick
  */
 
+void
 drain(ymin, ymax, xmin, xmax)
 int ymin, ymax, xmin, xmax;
 {

@@ -1,3 +1,5 @@
+#include <string.h>
+#include <stdlib.h>
 #include "curses.h"
 #include "rogue.h"
 
@@ -7,8 +9,7 @@
  * @(#)rings.c	3.17 (Berkeley) 6/15/81
  */
 
-char *malloc();
-
+void
 ring_on()
 {
     register struct object *obj;
@@ -96,6 +97,7 @@ ring_on()
     }
 }
 
+void
 ring_off()
 {
     register int ring;
@@ -127,6 +129,7 @@ ring_off()
 	msg("Was wearing %s", inv_name(obj, TRUE));
 }
 
+int
 gethand()
 {
     register int c;
@@ -154,6 +157,7 @@ gethand()
 /*
  * how much food does this ring use up?
  */
+int
 ring_eat(hand)
 register int hand;
 {
@@ -187,7 +191,7 @@ register struct object *obj;
 	return "";
     switch (obj->o_which)
     {
-	when R_PROTECT:
+	case R_PROTECT:
 	case R_ADDSTR:
 	case R_ADDDAM:
 	case R_ADDHIT:

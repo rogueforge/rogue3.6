@@ -4,6 +4,8 @@
  * @(#)list.c	3.3 (Berkeley) 6/15/81
  */
 
+#include <stdlib.h>
+#include <unistd.h>
 #include "curses.h"
 #include "rogue.h"
 
@@ -12,6 +14,7 @@
  *	Takes an item out of whatever linked list it might be in
  */
 
+int
 _detach(list, item)
 register struct linked_list **list, *item;
 {
@@ -28,6 +31,7 @@ register struct linked_list **list, *item;
  *	add an item to the head of a list
  */
 
+int
 _attach(list, item)
 register struct linked_list **list, *item;
 {
@@ -51,6 +55,7 @@ register struct linked_list **list, *item;
  *	Throw the whole blamed thing away
  */
 
+int
 _free_list(ptr)
 register struct linked_list **ptr;
 {
@@ -69,6 +74,7 @@ register struct linked_list **ptr;
  *	free up an item
  */
 
+int
 discard(item)
 register struct linked_list *item;
 {
@@ -103,7 +109,10 @@ int size;
     register char *space = ALLOC(size);
 
     if (space == NULL)
-	fatal(sprintf(prbuf, "Rogue ran out of memory (%d).  Fatal error!", sbrk(0)));
+    {
+	sprintf(prbuf, "Rogue ran out of memory (%p).  Fatal error!", sbrk(0));
+	fatal(prbuf);
+    }
     total++;
     return space;
 }

@@ -13,6 +13,7 @@
  *	Pick up an object and add it to the pack.  If the argument is non-null
  * use it as the linked_list pointer instead of gettting it off the ground.
  */
+void
 add_pack(item, silent)
 register struct linked_list *item;
 bool silent;
@@ -185,6 +186,7 @@ picked_up:
  * inventory:
  *	list what is in the pack
  */
+int
 inventory(list, type)
 struct linked_list *list;
 int type;
@@ -264,8 +266,9 @@ int type;
  * pick_up:
  *	Add something to characters pack.
  */
+int
 pick_up(ch)
-char ch;
+int ch;
 {
     switch(ch)
     {
@@ -291,6 +294,7 @@ char ch;
  * picky_inven:
  *	Allow player to inventory a single item
  */
+void
 picky_inven()
 {
     register struct linked_list *item;
@@ -381,6 +385,7 @@ int type;
     return NULL;
 }
 
+int
 pack_char(obj)
 register struct object *obj;
 {

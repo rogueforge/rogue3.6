@@ -4,6 +4,7 @@
  * @(#)passages.c	3.4 (Berkeley) 6/15/81
  */
 
+#include <stdlib.h>
 #include "curses.h"
 #include "rogue.h"
 
@@ -12,6 +13,7 @@
  *	Draw all the passages on a level.
  */
 
+int
 do_passages()
 {
     register struct rdes *r1, *r2;
@@ -120,6 +122,7 @@ do_passages()
  *	Draw a corridor from a room in a certain direction.
  */
 
+int
 conn(r1, r2)
 int r1, r2;
 {
@@ -256,6 +259,7 @@ int r1, r2;
  * also enters the door in the exits array of the room.
  */
 
+int
 door(rm, cp)
 register struct room *rm;
 register coord *cp;
@@ -269,6 +273,7 @@ register coord *cp;
  *	add the passages to the current window (wizard command)
  */
 
+int
 add_pass()
 {
     register int y, x, ch;

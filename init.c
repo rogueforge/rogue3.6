@@ -6,6 +6,7 @@
 
 #include "curses.h"
 #include <ctype.h>
+#include <string.h>
 #include "rogue.h"
 
 bool playing = TRUE, running = FALSE, wizard = FALSE;
@@ -18,6 +19,51 @@ int mpos = 0, no_move = 0, no_command = 0, level = 1, purse = 0, inpack = 0;
 int total = 0, no_food = 0, count = 0, fung_hit = 0, quiet = 0;
 int food_left = HUNGERTIME, group = 1, hungry_state = 0;
 int lastscore = -1;
+
+struct thing player;
+struct room rooms[MAXROOMS];
+struct room *oldrp;
+struct stats max_stats; 
+struct object *cur_armor;
+struct object *cur_ring[2];
+bool after;
+bool waswizard;
+coord oldpos;					/* Position before last look() call */
+coord delta;					/* Change indicated to get_dir()    */
+
+bool s_know[MAXSCROLLS];			/* Does he know what a scroll does */
+bool p_know[MAXPOTIONS];			/* Does he know what a potion does */
+bool r_know[MAXRINGS];				/* Does he know what a ring does
+ */
+bool ws_know[MAXSTICKS];			/* Does he know what a stick does */
+
+char take;					/* Thing the rogue is taking */
+char runch;					/* Direction player is running */
+char whoami[80];				/* Name of player */
+char fruit[80];				/* Favorite fruit */
+char huh[80];					/* The last message printed */
+int dnum;					/* Dungeon number */
+char *s_names[MAXSCROLLS];			/* Names of the scrolls */
+char *p_colors[MAXPOTIONS];			/* Colors of the potions */
+char *r_stones[MAXRINGS];			/* Stone settings of the rings */
+char *a_names[MAXARMORS];			/* Names of armor types */
+char *ws_made[MAXSTICKS];			/* What sticks are made of */
+char *s_guess[MAXSCROLLS];			/* Players guess at what scroll is */
+char *p_guess[MAXPOTIONS];			/* Players guess at what potion is */
+char *r_guess[MAXRINGS];			/* Players guess at what ring is */
+char *ws_guess[MAXSTICKS];			/* Players guess at what wand is */
+char *ws_type[MAXSTICKS];			/* Is it a wand or a staff */
+char file_name[80];				/* Save file name */
+char home[80];					/* User's home directory */
+char prbuf[100];				/* Buffer for sprintfs */
+char outbuf[BUFSIZ];				/* Output buffer for stdout */
+int max_hp;					/* Player's max hit points */
+int ntraps;					/* Number of traps on this level */
+int max_level;					/* Deepest player has gone */
+int seed;					/* Random number seed */
+
+struct trap  traps[MAXTRAPS];
+
 
 #define ___ 1
 #define _x {1,1}
@@ -57,6 +103,7 @@ struct monster monsters[26] = {
  *	roll up the rogue
  */
 
+int
 init_player()
 {
     pstats.s_lvl = 1;
@@ -316,6 +363,7 @@ int a_chances[MAXARMORS] = {
  * init_things
  *	Initialize the probabilities for types of things
  */
+int
 init_things()
 {
     register struct magic_item *mp;
@@ -330,6 +378,7 @@ init_things()
  *	Initialize the potion color scheme for this time
  */
 
+int
 init_colors()
 {
     register int i;
@@ -355,6 +404,7 @@ init_colors()
  *	Generate the names of the various scrolls
  */
 
+int
 init_names()
 {
     register int nsyl;
@@ -392,6 +442,7 @@ init_names()
  *	Initialize the ring stone setting scheme for this time
  */
 
+int
 init_stones()
 {
     register int i;
@@ -417,6 +468,7 @@ init_stones()
  *	Initialize the construction materials for wands and staffs
  */
 
+int
 init_materials()
 {
     register int i;
@@ -448,6 +500,7 @@ init_materials()
     badcheck("sticks", ws_magic, MAXSTICKS);
 }
 
+void
 badcheck(name, magic, bound)
 char *name;
 register struct magic_item *magic;

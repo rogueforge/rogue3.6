@@ -8,6 +8,7 @@
  * @(#)new_level.c	3.7 (Berkeley) 6/2/81
  */
 
+int
 new_level()
 {
     register int rm, i;
@@ -54,7 +55,7 @@ new_level()
 	    } until (winat(stairs.y, stairs.x) == FLOOR);
 	    switch(rnd(6))
 	    {
-		when 0: ch = TRAPDOOR;
+		case 0: ch = TRAPDOOR;
 		when 1: ch = BEARTRAP;
 		when 2: ch = SLEEPTRAP;
 		when 3: ch = ARROWTRAP;
@@ -82,6 +83,7 @@ new_level()
  * Pick a room that is really there
  */
 
+int
 rnd_room()
 {
     register int rm;
@@ -98,6 +100,7 @@ rnd_room()
  *	put potions and scrolls on this level
  */
 
+void
 put_things()
 {
     register int i;

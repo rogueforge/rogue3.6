@@ -9,6 +9,10 @@
 
 #include "curses.h"
 #include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <time.h>
 #include <pwd.h>
 #include "mach_dep.h"
 #include "rogue.h"
@@ -17,7 +21,13 @@
 static int num_checks;		/* times we've gone over in checkout() */
 #endif
 
+WINDOW *cw;			/* Window that the player sees */
+WINDOW *hw;			/* Used for the help command */
+WINDOW *mw;			/* Used to store mosnters */
+
+int
 main(argc, argv, envp)
+int argc;
 char **argv;
 char **envp;
 {
@@ -25,10 +35,8 @@ char **envp;
     register struct passwd *pw;
     register struct linked_list *item;
     register struct object *obj;
-    struct passwd *getpwuid();
-    char *getpass(), *crypt();
-    int quit(), lowtime;
-    long now;
+    int lowtime;
+    time_t now;
 
     /*
      * check for print-score option
@@ -36,7 +44,7 @@ char **envp;
     if (argc == 2 && strcmp(argv[1], "-s") == 0)
     {
 	waswizard = TRUE;
-	score(0, -1);
+	score(0, -1, 0);
 	exit(0);
     }
     /*
@@ -120,10 +128,10 @@ char **envp;
     /*
      * Start up daemons and fuses
      */
-    daemon(doctor, 0, AFTER);
+    start_daemon(doctor, 0, AFTER);
     fuse(swander, 0, WANDERTIME, AFTER);
-    daemon(stomach, 0, AFTER);
-    daemon(runners, 0, AFTER);
+    start_daemon(stomach, 0, AFTER);
+    start_daemon(runners, 0, AFTER);
     /*
      * Give the rogue his weaponry.  First a mace.
      */
@@ -189,7 +197,9 @@ char **envp;
  *	Exit the program abnormally.
  */
 
-endit()
+void
+endit(signum)
+int signum;
 {
     fatal("Ok, if you want to exit that badly, I'll have to allow it\n");
 }
@@ -199,6 +209,7 @@ endit()
  *	Exit the program, printing a message.
  */
 
+int
 fatal(s)
 char *s;
 {
@@ -215,6 +226,7 @@ char *s;
  *	Pick a very random number.
  */
 
+int
 rnd(range)
 register int range;
 {
@@ -226,6 +238,7 @@ register int range;
  *	roll a number of dice
  */
 
+int
 roll(number, sides)
 register int number, sides;
 {
@@ -239,7 +252,8 @@ register int number, sides;
 /*
  * handle stop and start signals
  */
-tstp()
+void
+tstp(int signum)
 {
     mvcur(0, COLS - 1, LINES - 1, 0);
     endwin();
@@ -256,11 +270,11 @@ tstp()
 }
 # endif
 
+int
 setup()
 {
-    int quit();
 #ifdef CHECKTIME
-    int  checkout();
+    void  checkout(int);
 #endif
 
 #ifndef DUMP
@@ -304,6 +318,7 @@ setup()
  * refreshing things and looking at the proper times.
  */
 
+int
 playit()
 {
     register char *opts;
@@ -333,13 +348,14 @@ playit()
     oldrp = roomin(&hero);
     while (playing)
 	command();			/* Command execution */
-    endit();
+    endit(0);
 }
 
 #if MAXLOAD|MAXUSERS
 /*
  * see if the system is being used too much for this game
  */
+int
 too_much()
 {
 #ifdef MAXLOAD
@@ -359,6 +375,7 @@ too_much()
 /*
  * see if a user is an author of the program
  */
+int
 author()
 {
     switch (getuid())
@@ -372,7 +389,8 @@ author()
 #endif
 
 #ifdef CHECKTIME
-checkout()
+void
+checkout(int signum)
 {
     static char *msgs[] = {
 	"The load is too high to be playing.  Please leave in %d minutes",
@@ -405,72 +423,61 @@ checkout()
  * checkout()'s version of msg.  If we are in the middle of a shell, do a
  * printf instead of a msg to avoid the refresh.
  */
-chmsg(fmt, arg)
-char *fmt;
-int arg;
+void
+chmsg(char *fmt, ...)
 {
+    va_list arg;
+
     if (in_shell)
     {
-	printf(fmt, arg);
+	vprintf(fmt, arg);
 	putchar('\n');
 	fflush(stdout);
     }
     else
-	msg(fmt, arg);
+    {
+	if (*fmt == '\0')
+	{
+	    wmove(cw, 0, 0);
+	    wclrtoeol(cw);
+	    mpos = 0;
+	    return;
+	}
+
+	doadd(fmt, arg);
+    }
 }
 #endif
 
 #ifdef LOADAV
 
-#include <nlist.h>
-
-struct nlist avenrun =
-{
-    "_avenrun"
-};
-
+int
 loadav(avg)
 register double *avg;
 {
-    register int kmem;
-
-    if ((kmem = open("/dev/kmem", 0)) < 0)
-	goto bad;
-    nlist(NAMELIST, &avenrun);
-    if (avenrun.n_type == 0)
-    {
-bad:
-	avg[0] = avg[1] = avg[2] = 0.0;
-	return;
-    }
-
-    lseek(kmem, (long) avenrun.n_value, 0);
-    read(kmem, avg, 3 * sizeof (double));
+    return getloadavg(avg,3);
 }
 #endif
 
 #ifdef UCOUNT
-
 #include <utmp.h>
 
-struct utmp buf;
-
+int
 ucount()
 {
-    register struct utmp *up;
-    register FILE *utmp;
-    register int count;
+    struct utmp *up=NULL;
+    int count=0;
 
-    if ((utmp = fopen(UTMP, "r")) == NULL)
-	return 0;
+    setutent();    
+    do
+    {
+		up = getutent();
+		if (up && up->ut_type == USER_PROCESS)
+			count++;
+    } while(up != NULL);
 
-    up = &buf;
-    count = 0;
+   endutent();
 
-    while (fread(up, 1, sizeof (*up), utmp) > 0)
-	if (buf.ut_name[0] != '\0')
-	    count++;
-    fclose(utmp);
-    return count;
+   return(count);
 }
 #endif

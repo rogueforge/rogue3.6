@@ -7,6 +7,7 @@
 
 #include "curses.h"
 #include <ctype.h>
+#include <string.h>
 #include "rogue.h"
 
 /*
@@ -23,7 +24,7 @@ register bool drop;
 
     switch(obj->o_type)
     {
-	when SCROLL:
+	case SCROLL:
 	    if (obj->o_count == 1)
 		strcpy(prbuf, "A scroll ");
 	    else
@@ -134,6 +135,7 @@ register bool drop;
  * money:
  *	Add to characters purse
  */
+void
 money()
 {
     register struct room *rp;
@@ -160,6 +162,7 @@ money()
  * drop:
  *	put something down
  */
+void
 drop()
 {
     register char ch;
@@ -206,6 +209,7 @@ drop()
 /*
  * do special checks for dropping or unweilding|unwearing|unringing
  */
+int 
 dropcheck(op)
 register struct object *op;
 {
@@ -273,7 +277,7 @@ new_thing()
      */
     switch (no_food > 3 ? 2 : pick_one(things, NUMTHINGS))
     {
-	when 0:
+	case 0:
 	    cur->o_type = POTION;
 	    cur->o_which = pick_one(p_magic, MAXPOTIONS);
 	when 1:
@@ -321,7 +325,7 @@ new_thing()
 	    cur->o_which = pick_one(r_magic, MAXRINGS);
 	    switch (cur->o_which)
 	    {
-		when R_ADDSTR:
+		case R_ADDSTR:
 		case R_PROTECT:
 		case R_ADDHIT:
 		case R_ADDDAM:
@@ -348,6 +352,7 @@ new_thing()
 /*
  * pick an item out of a list of nitems possible magic items
  */
+int
 pick_one(magic, nitems)
 register struct magic_item *magic;
 int nitems;

@@ -14,6 +14,7 @@ coord ch_ret;				/* Where chasing takes you */
  *	Make all the running monsters move.
  */
 
+void
 runners()
 {
     register struct linked_list *item;
@@ -38,6 +39,7 @@ runners()
  *	Make one thing chase another.
  */
 
+void
 do_chase(th)
 register struct thing *th;
 {
@@ -115,6 +117,7 @@ register struct thing *th;
  *	or stop it from running (for when it dies)
  */
 
+int
 runto(runner, spot)
 register coord *runner;
 coord *spot;
@@ -143,6 +146,7 @@ coord *spot;
  *	FALSE if we reach the goal.
  */
 
+int
 chase(tp, ee)
 struct thing *tp;
 coord *ee;
@@ -277,6 +281,7 @@ int x;
  *	Check to see if the move is legal if it is diagonal
  */
 
+int
 diag_ok(sp, ep)
 register coord *sp, *ep;
 {
@@ -290,6 +295,7 @@ register coord *sp, *ep;
  *	returns true if the hero can see a certain coordinate.
  */
 
+int
 cansee(y, x)
 register int y, x;
 {

@@ -8,6 +8,7 @@
 
 #include "curses.h"
 #include <ctype.h>
+#include <string.h>
 #include "rogue.h"
 
 #define	NUM_OPTS	(sizeof optlist / sizeof (OPTION))
@@ -49,6 +50,7 @@ OPTION	optlist[] = {
 /*
  * print and then set options from the terminal
  */
+int
 option()
 {
     register OPTION	*op;
@@ -100,6 +102,7 @@ option()
 /*
  * put out a boolean
  */
+int
 put_bool(b)
 bool	*b;
 {
@@ -109,6 +112,7 @@ bool	*b;
 /*
  * put out a string
  */
+int
 put_str(str)
 char *str;
 {
@@ -119,6 +123,7 @@ char *str;
  * allow changing a boolean option and print it out
  */
 
+int
 get_bool(bp, win)
 bool *bp;
 WINDOW *win;
@@ -167,6 +172,7 @@ WINDOW *win;
 /*
  * set a string option
  */
+int
 get_str(opt, win)
 register char *opt;
 WINDOW *win;
@@ -250,6 +256,7 @@ WINDOW *win;
  * or the end of the entire option string.
  */
 
+int
 parse_opts(str)
 register char *str;
 {
@@ -321,11 +328,12 @@ register char *str;
 /*
  * copy string using unctrl for things
  */
+int
 strucpy(s1, s2, len)
 register char *s1, *s2;
 register int len;
 {
-    register char *sp;
+    register const char *sp;
 
     while (len--)
     {
