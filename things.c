@@ -140,7 +140,7 @@ money()
 {
     register struct room *rp;
 
-    for (rp = rooms; rp < &rooms[MAXROOMS]; rp++)
+    for (rp = rooms; rp <= &rooms[MAXROOMS-1]; rp++)
 	if (ce(hero, rp->r_gold))
 	{
 	    if (notify)

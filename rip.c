@@ -122,7 +122,7 @@ char monst;
 	return;
     outf = fdopen(fd, "w");
 
-    for (scp = top_ten; scp < &top_ten[10]; scp++)
+    for (scp = top_ten; scp <= &top_ten[9]; scp++)
     {
 	scp->sc_score = 0;
 	for (i = 0; i < 80; i++)
@@ -144,10 +144,10 @@ char monst;
      */
     if (!waswizard)
     {
-	for (scp = top_ten; scp < &top_ten[10]; scp++)
+	for (scp = top_ten; scp <= &top_ten[9]; scp++)
 	    if (amount > scp->sc_score)
 		break;
-	if (scp < &top_ten[10])
+	if (scp <= &top_ten[9])
 	{
 	    for (sc2 = &top_ten[9]; sc2 > scp; sc2--)
 		*sc2 = *(sc2-1);
@@ -166,7 +166,7 @@ char monst;
      * Print the list
      */
     printf("\nTop Ten Adventurers:\nRank\tScore\tName\n");
-    for (scp = top_ten; scp < &top_ten[10]; scp++) {
+    for (scp = top_ten; scp <= &top_ten[9]; scp++) {
 	if (scp->sc_score) {
 	    printf("%ld\t%d\t%s: %s on level %d", scp - top_ten + 1,
 		scp->sc_score, scp->sc_name, reason[scp->sc_flags],

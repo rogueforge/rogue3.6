@@ -107,7 +107,7 @@ register int flag;
     /*
      * Loop through the devil list
      */
-    for (dev = d_list; dev < &d_list[MAXDAEMONS]; dev++)
+    for (dev = d_list; dev <= &d_list[MAXDAEMONS-1]; dev++)
 	/*
 	 * Executing each one, giving it the proper arguments
 	 */
@@ -181,7 +181,7 @@ register int flag;
     /*
      * Step though the list
      */
-    for (wire = d_list; wire < &d_list[MAXDAEMONS]; wire++)
+    for (wire = d_list; wire <= &d_list[MAXDAEMONS-1]; wire++)
     {
 	/*
 	 * Decrementing counters and starting things we want.  We also need

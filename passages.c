@@ -39,7 +39,7 @@ do_passages()
     /*
      * reinitialize room graph description
      */
-    for (r1 = rdes; r1 < &rdes[MAXROOMS]; r1++)
+    for (r1 = rdes; r1 <= &rdes[MAXROOMS-1]; r1++)
     {
 	for (j = 0; j < MAXROOMS; j++)
 	    r1->isconn[j] = FALSE;

@@ -375,7 +375,7 @@ init_things()
 {
     register struct magic_item *mp;
 
-    for (mp = &things[1]; mp < &things[NUMTHINGS]; mp++)
+    for (mp = &things[1]; mp <= &things[NUMTHINGS-1]; mp++)
 	mp->mi_prob += (mp-1)->mi_prob;
     badcheck("things", things, NUMTHINGS);
 }

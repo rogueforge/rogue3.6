@@ -252,7 +252,7 @@ register coord *cp;
 {
     register struct room *rp;
 
-    for (rp = rooms; rp < &rooms[MAXROOMS]; rp++)
+    for (rp = rooms; rp <= &rooms[MAXROOMS-1]; rp++)
 	if (inroom(rp, cp))
 	    return rp;
     return NULL;
