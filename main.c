@@ -121,6 +121,23 @@ char **envp;
     init_stones();			/* Set up stone settings of rings */
     init_materials();			/* Set up materials of wands */
     initscr();				/* Start up cursor package */
+
+    if (COLS < 70)
+    {
+	endwin();
+	printf("\n\nSorry, %s, but your terminal window has too few columns.\n", whoami);
+	printf("Your terminal has %d columns, needs 70.\n",COLS);
+	exit(1);
+    }
+
+    if (LINES < 22)
+    {
+	endwin();
+	printf("\n\nSorry, %s, but your terminal window has too few lines.\n", whoami);
+	printf("Your terminal has %d lines, needs 22.\n",LINES);
+	exit(1);
+    }
+
     setup();
     /*
      * Set up windows
