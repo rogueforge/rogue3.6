@@ -42,11 +42,11 @@ GET=	get
 	$(GET) $@
 
 a.out: $(HDRS) $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(CRLIB) -ltermlib
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(CRLIB) -lcrypt
 	size a.out
 
 k.out: $(HDRS) $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(CRLIB) -ltermlib -o k.out
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(CRLIB) -lcrypt -o k.out
 
 rogue: newvers a.out
 	cp a.out rogue
@@ -57,7 +57,7 @@ install: rogue
 
 p.out:	$(HDRS) $(POBJS)
 	@rm -f x.c
-	$(CC) $(PROFLAGS) $(LDFLAGS) $(POBJS) $(PCRLIB) -ltermlib -o p.out
+	$(CC) $(PROFLAGS) $(LDFLAGS) $(POBJS) $(PCRLIB) -lcrypt -o p.out
 	size p.out
 
 newvers:

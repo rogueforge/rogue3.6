@@ -186,7 +186,11 @@ WINDOW *win;
     {
 	if (c == -1)
 	    continue;
+#if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H)
 	else if (c == _tty.sg_erase)	/* process erase character */
+#else
+	else if (c == erasechar())	/* process erase character */
+#endif
 	{
 	    if (sp > buf)
 	    {
@@ -198,7 +202,11 @@ WINDOW *win;
 	    }
 	    continue;
 	}
+#if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H)
 	else if (c == _tty.sg_kill)	/* process kill character */
+#else
+	else if (c == killchar())	/* process kill character */
+#endif
 	{
 	    sp = buf;
 	    wmove(win, oy, ox);

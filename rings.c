@@ -80,7 +80,7 @@ ring_on()
     status();
     if (r_know[obj->o_which] && r_guess[obj->o_which])
     {
-	cfree(r_guess[obj->o_which]);
+	free(r_guess[obj->o_which]);
 	r_guess[obj->o_which] = NULL;
     }
     else if (!r_know[obj->o_which] && askme && r_guess[obj->o_which] == NULL)

@@ -258,6 +258,7 @@ tstp()
 
 setup()
 {
+    int quit();
 #ifdef CHECKTIME
     int  checkout();
 #endif
@@ -267,7 +268,9 @@ setup()
     signal(SIGILL, auto_save);
     signal(SIGTRAP, auto_save);
     signal(SIGIOT, auto_save);
+#ifdef SIGEMT
     signal(SIGEMT, auto_save);
+#endif
     signal(SIGFPE, auto_save);
     signal(SIGBUS, auto_save);
     signal(SIGSEGV, auto_save);
@@ -309,7 +312,11 @@ playit()
      * set up defaults for slow terminals
      */
 
+#if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H)
     if (_tty.sg_ospeed < B1200)
+#else
+    if (baudrate() < 1200)
+#endif
     {
 	terse = TRUE;
 	jump = TRUE;

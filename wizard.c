@@ -29,14 +29,14 @@ whatis()
 	    s_know[obj->o_which] = TRUE;
 	    if (s_guess[obj->o_which])
 	    {
-		cfree(s_guess[obj->o_which]);
+		free(s_guess[obj->o_which]);
 		s_guess[obj->o_which] = NULL;
 	    }
         when POTION:
 	    p_know[obj->o_which] = TRUE;
 	    if (p_guess[obj->o_which])
 	    {
-		cfree(p_guess[obj->o_which]);
+		free(p_guess[obj->o_which]);
 		p_guess[obj->o_which] = NULL;
 	    }
 	when STICK:
@@ -44,7 +44,7 @@ whatis()
 	    obj->o_flags |= ISKNOW;
 	    if (ws_guess[obj->o_which])
 	    {
-		cfree(ws_guess[obj->o_which]);
+		free(ws_guess[obj->o_which]);
 		ws_guess[obj->o_which] = NULL;
 	    }
         when WEAPON:
@@ -55,7 +55,7 @@ whatis()
 	    obj->o_flags |= ISKNOW;
 	    if (r_guess[obj->o_which])
 	    {
-		cfree(r_guess[obj->o_which]);
+		free(r_guess[obj->o_which]);
 		r_guess[obj->o_which] = NULL;
 	    }
     }
@@ -176,12 +176,21 @@ passwd()
     mpos = 0;
     sp = buf;
     while ((c = getchar()) != '\n' && c != '\r' && c != '\033')
+#if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H)
 	if (c == _tty.sg_kill)
 	    sp = buf;
 	else if (c == _tty.sg_erase && sp > buf)
-	    sp--;
+            sp--;
 	else
 	    *sp++ = c;
+#else
+	if (c == killchar())
+	    sp = buf;
+	else if (c == erasechar())
+            sp--;
+	else
+	    *sp++ = c;
+#endif
     if (sp == buf)
 	return FALSE;
     *sp = '\0';

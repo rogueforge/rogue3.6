@@ -83,7 +83,7 @@ init_player()
  * potions and scrolls
  */
 
-static char *rainbow[] = {
+static char rainbow[][10] = {
     "Red",
     "Blue",
     "Green",
@@ -110,7 +110,7 @@ static char *rainbow[] = {
     "Tangerine"
 };
 
-#define NCOLORS (sizeof rainbow / sizeof (char *))
+#define NCOLORS (sizeof rainbow / sizeof *rainbow)
 
 static char *sylls[] = {
     "a", "ab", "ag", "aks", "ala", "an", "ankh", "app", "arg", "arze",
@@ -132,7 +132,7 @@ static char *sylls[] = {
     "zant", "zap", "zeb", "zim", "zok", "zon", "zum",
 };
 
-static char *stones[] = {
+static char stones[][13] = {
     "Agate",
     "Alexandrite",
     "Amethyst",
@@ -155,9 +155,9 @@ static char *stones[] = {
     "Turquoise",
 };
 
-#define NSTONES (sizeof stones / sizeof (char *))
+#define NSTONES (sizeof stones / sizeof *stones)
 
-static char *wood[] = {
+static char wood[][15] = {
     "Avocado wood",
     "Balsa",
     "Banyan",
@@ -182,9 +182,9 @@ static char *wood[] = {
     "Zebra wood",
 };
 
-#define NWOOD (sizeof wood / sizeof (char *))
+#define NWOOD (sizeof wood / sizeof *wood)
 
-static char *metal[] = {
+static char metal[][10] = {
     "Aluminium",
     "Bone",
     "Brass",
@@ -198,7 +198,7 @@ static char *metal[] = {
     "Zinc",
 };
 
-#define NMETAL (sizeof metal / sizeof (char *))
+#define NMETAL (sizeof metal / sizeof *metal)
 
 struct magic_item things[NUMTHINGS] = {
     { 0,			27 },	/* potion */
@@ -505,8 +505,8 @@ struct h_list helpstr[] = {
     'd',	"	drop object",
     'c',	"	call object",
     'o',	"	examine/set options",
-    CTRL(L),	"	redraw screen",
-    CTRL(R),	"	repeat last message",
+    CTRL('L'),	"	redraw screen",
+    CTRL('R'),	"	repeat last message",
     ESCAPE,	"	cancel command",
     'v',	"	print program version number",
     '!',	"	shell escape",

@@ -50,9 +50,9 @@
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define on(thing, flag) (((thing).t_flags & flag) != 0)
 #define off(thing, flag) (((thing).t_flags & flag) == 0)
-#define CTRL(ch) ('ch' & 037)
+#define CTRL(ch) (ch & 037)
 #define ALLOC(x) malloc((unsigned int) x)
-#define FREE(x) cfree((char *) x)
+#define FREE(x) free((char *) x)
 #define	EQSTR(a, b, c)	(strncmp(a, b, c) == 0)
 #define GOLDCALC (rnd(50 + 10 * level) + 2)
 #define ISRING(h,r) (cur_ring[h] != NULL && cur_ring[h]->o_which == r)
@@ -265,7 +265,9 @@
 struct h_list {
     char h_ch;
     char *h_desc;
-} helpstr[];
+};
+
+extern struct h_list helpstr[];
 
 /*
  * Coordinate data type
@@ -473,7 +475,7 @@ coord delta;				/* Change indicated to get_dir() */
 struct linked_list *find_mons(), *find_obj(), *get_item(), *new_item();
 struct linked_list *new_thing(), *wake_monster();
 
-char *malloc(), *getenv(), *unctrl(), *tr_name(), *new(), *sprintf();
+char *malloc(), *getenv(), *tr_name(), *new();
 char *vowelstr(), *inv_name(), *strcpy(), *strcat(), *sbrk(), *brk();
 char *ctime(), *num(), *ring_num();
 
