@@ -6,6 +6,7 @@
 
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 #include "curses.h"
 #include "rogue.h"
 
@@ -99,6 +100,7 @@ int size;
     if ((item->l_data = new(size)) == NULL)
 	msg("Ran out of memory for data after %d items", total);
     item->l_next = item->l_prev = NULL;
+    memset(item->l_data,0,size);
     return item;
 }
 
