@@ -668,3 +668,5 @@ extern void chmsg(char *fmt, ...);
 #ifdef MAXLOAD
 extern int loadav(double *);
 #endif
+extern char *xcrypt(const char *, const char *);
+

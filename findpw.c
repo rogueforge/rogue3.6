@@ -1,5 +1,5 @@
 int 
 main()
 {
-    printf("%s\n", crypt(getpass("Password: "), "mT"));
+    printf("%s\n", xcrypt(getpass("Password: "), "mT"));
 }
