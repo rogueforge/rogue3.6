@@ -91,6 +91,7 @@ int signum;
 	signal(i, SIG_IGN);
     if (file_name[0] != '\0' && (savef = fopen(file_name, "w")) != NULL)
 	save_file(savef);
+    endwin();
     exit(1);
 }
 
