@@ -6,7 +6,7 @@
 /*
  * where scorefile should live
  */
-#ifdef USE_DJGPP
+#ifdef __DJGPP__
 #define SCOREFILE "C:\\GAMES\\ROGUE36\\ROGUE36.SCR"
 #else
 #define SCOREFILE	"/usr/local/games/rogue36/rogue36.scr"

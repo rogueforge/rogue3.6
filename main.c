@@ -39,7 +39,7 @@ char **envp;
     int lowtime;
     time_t now;
 
-#ifdef USE_DJGPP
+#ifdef __DJGPP__
     _fmode = O_BINARY;
 #endif
 
