@@ -6,15 +6,15 @@ HDRS=	rogue.h mach_dep.h
 OBJS=	vers.o armor.o chase.o command.o daemon.o daemons.o fight.o \
 	init.o io.o list.o main.o misc.o monsters.o move.o new_level.o \
 	options.o pack.o passages.o potions.o rings.o rip.o rooms.o \
-	save.o scrolls.o sticks.o things.o weapons.o wizard.o xcrypt.o
+	save.o scrolls.o state.o sticks.o things.o weapons.o wizard.o xcrypt.o
 POBJS=	vers.po armor.po chase.po command.po daemon.po daemons.po fight.po \
 	init.po io.po list.po main.po misc.po monsters.po move.po new_level.po \
 	options.po pack.po passages.po potions.po rings.po rip.po rooms.po \
-	save.po scrolls.po sticks.po things.po weapons.po wizard.po xcrypt.po
+	save.po scrolls.po state.po sticks.po things.po weapons.po wizard.po xcrypt.po
 CFILES=	vers.c armor.c chase.c command.c daemon.c daemons.c fight.c \
 	init.c io.c list.c main.c misc.c monsters.c move.c new_level.c \
 	options.c pack.c passages.c potions.c rings.c rip.c rooms.c \
-	save.c scrolls.c sticks.c things.c weapons.c wizard.c xcrypt.c
+	save.c scrolls.c state.c sticks.c things.c weapons.c wizard.c xcrypt.c
 CFLAGS= -g
 PROFLAGS= -p -O
 #LDFLAGS=-i	# For PDP-11's

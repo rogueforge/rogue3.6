@@ -1,3 +1,4 @@
+#include <string.h>
 #include "curses.h"
 #include "rogue.h"
 
@@ -151,7 +152,8 @@ put_things()
 	attach(lvl_obj, item);
 	cur = (struct object *) ldata(item);
 	cur->o_hplus = cur->o_dplus = 0;
-	cur->o_damage = cur->o_hurldmg = "0d0";
+	strcpy(cur->o_damage,"0d0");
+        strcpy(cur->o_hurldmg, "0d0");
 	cur->o_ac = 11;
 	cur->o_type = AMULET;
 	/*

@@ -119,7 +119,7 @@ init_player()
 	pstats.s_str.st_str = 16;
 	pstats.s_str.st_add = 0;
     }
-    pstats.s_dmg = "1d4";
+    strcpy(pstats.s_dmg,"1d4");
     pstats.s_arm = 10;
     max_stats = pstats;
     pack = NULL;
@@ -130,7 +130,7 @@ init_player()
  * potions and scrolls
  */
 
-static char rainbow[][10] = {
+struct words rainbow[] = {
     "Red",
     "Blue",
     "Green",
@@ -158,8 +158,9 @@ static char rainbow[][10] = {
 };
 
 #define NCOLORS (sizeof rainbow / sizeof *rainbow)
+int cNCOLORS = NCOLORS;
 
-static char *sylls[] = {
+struct words sylls[] = {
     "a", "ab", "ag", "aks", "ala", "an", "ankh", "app", "arg", "arze",
     "ash", "ban", "bar", "bat", "bek", "bie", "bin", "bit", "bjor",
     "blu", "bot", "bu", "byt", "comp", "con", "cos", "cre", "dalf",
@@ -179,7 +180,10 @@ static char *sylls[] = {
     "zant", "zap", "zeb", "zim", "zok", "zon", "zum",
 };
 
-static char stones[][13] = {
+#define NSYLLS (sizeof sylls / sizeof *sylls)
+int cNSYLLS = NSYLLS;
+
+struct words stones[] = {
     "Agate",
     "Alexandrite",
     "Amethyst",
@@ -203,8 +207,9 @@ static char stones[][13] = {
 };
 
 #define NSTONES (sizeof stones / sizeof *stones)
+int cNSTONES = NSTONES;
 
-static char wood[][15] = {
+struct words wood[] = {
     "Avocado wood",
     "Balsa",
     "Banyan",
@@ -230,8 +235,9 @@ static char wood[][15] = {
 };
 
 #define NWOOD (sizeof wood / sizeof *wood)
+int cNWOOD = NWOOD;
 
-static char metal[][10] = {
+struct words metal[] = {
     "Aluminium",
     "Bone",
     "Brass",
@@ -246,15 +252,16 @@ static char metal[][10] = {
 };
 
 #define NMETAL (sizeof metal / sizeof *metal)
+int cNMETAL = NMETAL;
 
 struct magic_item things[NUMTHINGS] = {
-    { 0,			27 },	/* potion */
-    { 0,			27 },	/* scroll */
-    { 0,			18 },	/* food */
-    { 0,			 9 },	/* weapon */
-    { 0,			 9 },	/* armor */
-    { 0,			 5 },	/* ring */
-    { 0,			 5 },	/* stick */
+    { "",			27 },	/* potion */
+    { "",			27 },	/* scroll */
+    { "",			18 },	/* food */
+    { "",			 9 },	/* weapon */
+    { "",			 9 },	/* armor */
+    { "",			 5 },	/* ring */
+    { "",			 5 },	/* stick */
 };
 
 struct magic_item s_magic[MAXSCROLLS] = {
@@ -387,7 +394,7 @@ init_colors()
     for (i = 0; i < MAXPOTIONS; i++)
     {
 	do
-	    str = rainbow[rnd(NCOLORS)];
+	    str = rainbow[rnd(NCOLORS)].w_string;
 	until (isupper(*str));
 	*str = tolower(*str);
 	p_colors[i] = str;
@@ -420,7 +427,7 @@ init_names()
 	    nsyl = rnd(3)+1;
 	    while(nsyl--)
 	    {
-		sp = sylls[rnd((sizeof sylls) / (sizeof (char *)))];
+		sp = sylls[rnd(NSYLLS)].w_string;
 		while(*sp)
 		    *cp++ = *sp++;
 	    }
@@ -451,7 +458,7 @@ init_stones()
     for (i = 0; i < MAXRINGS; i++)
     {
 	do
-	    str = stones[rnd(NSTONES)];
+	    str = stones[rnd(NSTONES)].w_string;
 	until (isupper(*str));
 	*str = tolower(*str);
 	r_stones[i] = str;
@@ -479,13 +486,13 @@ init_materials()
 	do
 	    if (rnd(100) > 50)
 	    {
-		str = metal[rnd(NMETAL)];
+		str = metal[rnd(NMETAL)].w_string;
 		if (isupper(*str))
 			ws_type[i] = "wand";
 	    }
 	    else
 	    {
-		str = wood[rnd(NWOOD)];
+		str = wood[rnd(NWOOD)].w_string;
 		if (isupper(*str))
 			ws_type[i] = "staff";
 	    }

@@ -7,12 +7,13 @@
 #include "curses.h"
 #include "rogue.h"
 #include <ctype.h>
+#include <string.h>
 
 /*
  * List of monsters in rough order of vorpalness
  */
-static char *lvl_mons =  "KJBSHEAOZGLCRQNYTWFIXUMVDP";
-static char *wand_mons = "KJBSH AOZG CRQ Y W IXU V  ";
+char lvl_mons[27] =  "KJBSHEAOZGLCRQNYTWFIXUMVDP";
+char wand_mons[27] = "KJBSH AOZG CRQ Y W IXU V  ";
 
 /*
  * randmonster:
@@ -63,7 +64,7 @@ register coord *cp;
     tp->t_stats.s_hpt = roll(mp->m_stats.s_lvl, 8);
     tp->t_stats.s_lvl = mp->m_stats.s_lvl;
     tp->t_stats.s_arm = mp->m_stats.s_arm;
-    tp->t_stats.s_dmg = mp->m_stats.s_dmg;
+    strcpy(tp->t_stats.s_dmg,mp->m_stats.s_dmg);
     tp->t_stats.s_exp = mp->m_stats.s_exp;
     tp->t_stats.s_str.st_str = 10;
     tp->t_flags = mp->m_flags;

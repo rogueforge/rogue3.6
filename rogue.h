@@ -258,6 +258,7 @@
  * Now we define the structures and types
  */
 
+
 /*
  * Delayed actions
  *
@@ -310,7 +311,7 @@ struct linked_list {
  */
 
 struct magic_item {
-    char *mi_name;
+    char mi_name[30];
     int mi_prob;
     int mi_worth;
 };
@@ -348,7 +349,7 @@ struct stats {
     int s_lvl;				/* Level of mastery */
     int s_arm;				/* Armor class */
     int s_hpt;				/* Hit points */
-    char *s_dmg;			/* String describing damage done */
+    char s_dmg[30];			/* String describing damage done */
 };
 
 /*
@@ -364,13 +365,14 @@ struct thing {
     short t_flags;			/* State word */
     struct stats t_stats;		/* Physical description */
     struct linked_list *t_pack;		/* What the thing is carrying */
+    int t_reserved;			/* reserved for save/restore code */
 };
 
 /*
  * Array containing information on all the various types of mosnters
  */
 struct monster {
-    char *m_name;			/* What to call the monster */
+    char m_name[20];			/* What to call the monster */
     short m_carry;			/* Probability of carrying something */
     short m_flags;			/* Things about the monster */
     struct stats m_stats;		/* Initial stats */
@@ -385,8 +387,8 @@ struct object {
     coord o_pos;			/* Where it lives on the screen */
     char *o_text;			/* What it says if you read it */
     char o_launch;			/* What you need to launch it */
-    char *o_damage;			/* Damage if used like sword */
-    char *o_hurldmg;			/* Damage if thrown */
+    char o_damage[8];			/* Damage if used like sword */
+    char o_hurldmg[8];			/* Damage if thrown */
     int o_count;			/* Count for plural objects */
     int o_which;			/* Which object of a type it is */
     int o_hplus;			/* Plusses to hit */
@@ -394,6 +396,10 @@ struct object {
     int o_ac;				/* Armor class */
     int o_flags;			/* Information about objects */
     int o_group;			/* Group number for this object */
+};
+
+struct words {
+    char w_string[30];
 };
 
 /*
@@ -509,8 +515,21 @@ extern coord *rndmove();
 #ifdef CHECKTIME
 extern void checkout(int);
 #endif
+extern char lvl_mons[27],wand_mons[27];
 
 extern struct trap *trap_at();
+
+extern int cNCOLORS;
+extern int cNMETAL;
+extern int cNWOOD;
+extern int cNSTONES;
+extern int cNSYLLS;
+extern struct words rainbow[];
+extern struct words sylls[];
+extern struct words stones[];
+extern struct words wood[];
+extern struct words metal[];
+
 
 extern int do_daemons(int);
 extern int do_fuses(int);
@@ -643,8 +662,8 @@ extern void unconfuse();
 extern int is_current(struct object *);
 extern int gethand();
 extern int aggravate();
-extern int encwrite(char *, unsigned int, FILE *);
-extern int encread(char *, unsigned int, int);
+extern int encwrite(void *, unsigned int, FILE *);
+extern int encread(void *, unsigned int, int);
 extern int draw_room(struct room *);
 extern int new_monster(struct linked_list *, int, coord *);
 extern int randmonster(int);
@@ -669,4 +688,5 @@ extern void chmsg(char *fmt, ...);
 extern int loadav(double *);
 #endif
 extern char *xcrypt(const char *, const char *);
-
+extern int rs_restore_file(int inf);
+extern int rs_save_file(FILE *savef);

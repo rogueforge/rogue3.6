@@ -18,12 +18,13 @@
  *	Process the user commands
  */
 
+char countch = FALSE, direction = FALSE, newcount = FALSE;
+
 int
 command()
 {
     register char ch;
     register int ntimes = 1;			/* Number of player moves */
-    static char countch, direction, newcount = FALSE;
 
     if (on(player, ISHASTE)) ntimes++;
     /*

@@ -101,6 +101,9 @@ int
 save_file(savef)
 register FILE *savef;
 {
+    int slines = LINES;
+    int scols = COLS;
+    
     wmove(cw, LINES-1, 0);
     draw(cw);
     fstat(fileno(savef), &sbuf);
@@ -109,7 +112,17 @@ register FILE *savef;
 #if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H)
     _endwin = TRUE;
 #endif
-    encwrite(version, (char *) sbrk(0) - version, savef);
+
+    encwrite(version,strlen(version)+1,savef);
+    encwrite(&sbuf.st_ino,sizeof(sbuf.st_ino),savef);
+    encwrite(&sbuf.st_dev,sizeof(sbuf.st_dev),savef);
+    encwrite(&sbuf.st_ctime,sizeof(sbuf.st_ctime),savef);
+    encwrite(&sbuf.st_mtime,sizeof(sbuf.st_mtime),savef);
+    encwrite(&slines,sizeof(slines),savef);
+    encwrite(&scols,sizeof(scols),savef);
+    
+    rs_save_file(savef);
+
     fclose(savef);
 }
 
@@ -122,6 +135,7 @@ char **envp;
     extern char **environ;
     char buf[80];
     STAT sbuf2;
+    int slines, scols;
 
     if (strcmp(file, "-r") == 0)
 	file = file_name;
@@ -141,9 +155,15 @@ char **envp;
 
     fstat(inf, &sbuf2);
     fflush(stdout);
-    brk(version + sbuf2.st_size);
     lseek(inf, 0L, 0);
-    encread(version, (unsigned int) sbuf2.st_size, inf);
+    encread(buf, strlen(version) + 1, inf);
+    encread(&sbuf.st_ino,sizeof(sbuf.st_ino), inf);
+    encread(&sbuf.st_dev,sizeof(sbuf.st_dev), inf);
+    encread(&sbuf.st_ctime,sizeof(sbuf.st_ctime), inf);
+    encread(&sbuf.st_mtime,sizeof(sbuf.st_mtime), inf);
+    encread(&slines,sizeof(slines),inf);
+    encread(&scols,sizeof(scols),inf);
+
     /*
      * we do not close the file so that we will have a hold of the
      * inode for as long as possible
@@ -160,23 +180,53 @@ char **envp;
 	    printf("Sorry, file has been touched.\n");
 	    return FALSE;
 	}
+
+    initscr();
+	
+    if (slines > LINES)
+    {
+    	printf("Sorry, original game was played on a screen with %d lines.\n",slines);
+		printf("Current screen only has %d lines. Unable to restore game\n",LINES);
+		return(FALSE);
+    }
+	
+    if (scols > COLS)
+    {
+    	printf("Sorry, original game was played on a screen with %d columns.\n",scols);
+		printf("Current screen only has %d columns. Unable to restore game\n",COLS);
+		return(FALSE);
+    }
+    
+    cw = newwin(LINES, COLS, 0, 0);
+    mw = newwin(LINES, COLS, 0, 0);
+    hw = newwin(LINES, COLS, 0, 0);
+    nocrmode();    
     mpos = 0;
     mvwprintw(cw, 0, 0, "%s: %s", file, ctime(&sbuf2.st_mtime));
 
     /*
      * defeat multiple restarting from the same place
      */
-    if (!wizard)
-	if (sbuf2.st_nlink != 1)
-	{
-	    printf("Cannot restore from a linked file\n");
-	    return FALSE;
-	}
-	else if (unlink(file) < 0)
-	{
-	    printf("Cannot unlink file\n");
-	    return FALSE;
-	}
+    if (!wizard	&& (sbuf2.st_nlink != 1))
+    {
+	endwin();
+	printf("Cannot restore from a linked file\n");
+	return FALSE;
+    }
+
+    if (rs_restore_file(inf) == FALSE)
+    {
+	endwin();
+	printf("Cannot restore file\n");
+    	return(FALSE);
+    }
+	
+    if (!wizard && (unlink(file) < 0))
+    {
+	endwin();
+	printf("Cannot unlink file\n");
+	return FALSE;
+    }
 
     environ = envp;
 #if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H)
@@ -198,6 +248,7 @@ char **envp;
     clearok(curscr, TRUE);
     touchwin(cw);
     srand(getpid());
+    status();
     playit();
     /*NOTREACHED*/
 }
@@ -207,7 +258,7 @@ char **envp;
  */
 int
 encwrite(start, size, outf)
-register char *start;
+register void *start;
 unsigned int size;
 register FILE *outf;
 {
@@ -217,7 +268,7 @@ register FILE *outf;
 
     while (size--)
     {
-	putc(*start++ ^ *ep++, outf);
+	putc(*(char *)start++ ^ *ep++, outf);
 	if (*ep == '\0')
 	    ep = encstr;
     }
@@ -228,7 +279,7 @@ register FILE *outf;
  */
 int
 encread(start, size, inf)
-register char *start;
+register void *start;
 unsigned int size;
 register int inf;
 {
@@ -242,7 +293,7 @@ register int inf;
 
     while (size--)
     {
-	*start++ ^= *ep++;
+	*(char *)start++ ^= *ep++;
 	if (*ep == '\0')
 	    ep = encstr;
     }
