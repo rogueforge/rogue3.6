@@ -1,5 +1,5 @@
 #
-# Makefile for rogue
+#  Makefile for rogue
 # %W% (Berkeley) %G%
 #
 HDRS=	rogue.h mach_dep.h
@@ -48,8 +48,7 @@ a.out: $(HDRS) $(OBJS)
 k.out: $(HDRS) $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(CRLIB) -o k.out
 
-rogue: newvers a.out
-	cp a.out rogue
+strip: rogue
 	strip rogue
 
 install: rogue
@@ -87,7 +86,8 @@ update:
 	ar uv .SAVE $(CFILES) $(HDRS) Makefile
 
 dist:
-	cp $(CFILES) $(HDRS) Makefile /ra/csr/toy/_dist
+	@mkdir dist
+	cp $(CFILES) $(HDRS) Makefile dist
 
 xtar: $(CFILES) $(HDRS) $(MISC)
 	rm -f rogue.tar
@@ -100,3 +100,41 @@ vgrind:
 	@csh $(VGRIND) -t -x index > vgrind.out.tbl
 
 cfiles: $(CFILES)
+
+rogue rogue.exe: $(HDRS) $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(CRLIB) -o $@
+
+unixdist:
+	make clean
+	make rogue
+	tar cf rogue36.tar rogue rogue.6 rogue.r
+	gzip rogue36.tar
+	mv rogue36.tar.gz rogue36-`uname`.tar.gz
+
+dist.irix:
+	make clean
+	make CFLAGS="-woff 1116 -mips3 -g -O2 -DDUMP" rogue
+	tar cf rogue36.tar rogue rogue.6 rogue.r
+	gzip rogue36.tar
+	mv rogue36.tar.gz rogue36-irix65.tar.gz
+
+dist.aix:
+	make clean
+	make CFLAGS="-qmaxmem=16768 -g -O2 -DDUMP" rogue
+	tar cf rogue36.tar rogue rogue.6 rogue.r
+	gzip rogue36.tar
+	mv rogue36.tar.gz rogue36-aix43.tar.gz
+
+dist.linux:
+	make clean
+	make CFLAGS="-g -O2 -DDUMP" rogue
+	tar cf rogue36.tar rogue rogue.6 rogue.r
+	gzip rogue36.tar
+	mv rogue36.tar.gz rogue36-linux.tar.gz
+	
+dist.djgpp:
+	del *.o 
+	del rogue.exe
+	make CRLIB=-lcurso LDFLAGS=-L$(DJDIR)/LIB CFLAGS="-DUSE_DJGPP -g -O2 -DDUMP" rogue.exe
+	zip rogue36.zip rogue.exe rogue.6 rogue.r
+
