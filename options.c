@@ -337,8 +337,9 @@ register int len;
 
     while (len--)
     {
-	strcpy(s1, (sp = unctrl(*s2++)));
+	strcpy(s1, (sp = unctrl(*s2)));
 	s1 += strlen(sp);
+	s2++;
     }
     *s1 = '\0';
 }
