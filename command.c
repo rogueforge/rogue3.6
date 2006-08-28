@@ -545,53 +545,27 @@ u_level()
 int
 shell()
 {
-    register int pid;
-    register char *sh;
-    int ret_status;
-
     /*
      * Set the terminal back to original mode
      */
-    sh = getenv("SHELL");
     wclear(hw);
     wmove(hw, LINES-1, 0);
     draw(hw);
     endwin();
     in_shell = TRUE;
     fflush(stdout);
-    /*
-     * Fork and do a shell
-     */
-    while((pid = fork()) < 0)
-	sleep(1);
-    if (pid == 0)
-    {
-	/*
-	 * Set back to original user, just in case
-	 */
-	if (setuid(getuid()) == 0)
-	    if (setgid(getgid()) == 0)
-		execl(sh == NULL ? "/bin/sh" : sh, "shell", "-i", NULL);
 
-	perror("No shelly");
-	exit(-1);
-    }
-    else
-    {
-	signal(SIGINT, SIG_IGN);
-	signal(SIGQUIT, SIG_IGN);
-	while (wait(&ret_status) != pid)
-	    continue;
-	signal(SIGINT, endit);
-	signal(SIGQUIT, endit);
-	printf("\n[Press return to continue]");
-	noecho();
-	crmode();
-	in_shell = FALSE;
-	wait_for('\n');
-	clearok(cw, TRUE);
-	touchwin(cw);
-    }
+    md_shellescape();
+
+    printf("\n[Press return to continue]");
+    fflush(stdout);
+    noecho();
+    crmode();
+    in_shell = FALSE;
+    wait_for('\n');
+    clearok(cw, TRUE);
+    touchwin(cw);
+    draw(cw);
 }
 
 /*

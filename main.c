@@ -39,9 +39,7 @@ char **envp;
     int lowtime;
     time_t now;
 
-#ifdef __DJGPP__
-    _fmode = O_BINARY;
-#endif
+    md_init();
 
     /*
      * check for print-score option
@@ -56,7 +54,7 @@ char **envp;
      * Check to see if he is a wizard
      */
     if (argc >= 2 && argv[1][0] == '\0')
-	if (strcmp(PASSWD, xcrypt(getpass("Wizard's password: "), "mT")) == 0)
+	if (strcmp(PASSWD, xcrypt(md_getpass("Wizard's password: "), "mT")) == 0)
 	{
 	    wizard = TRUE;
 	    argv++;
@@ -66,13 +64,9 @@ char **envp;
     /*
      * get home and options from environment
      */
-    if ((env = getenv("HOME")) != NULL)
-	strcpy(home, env);
-    else if ((pw = getpwuid(getuid())) != NULL)
-	strcpy(home, pw->pw_dir);
-    else
-	home[0] = '\0';
-    strcat(home, "/");
+    strncpy(home, md_gethomedir(), 80);
+    home[79] = '\0';
+
 
     strcpy(file_name, home);
     strcat(file_name, "rogue.save");
@@ -80,13 +74,7 @@ char **envp;
     if ((env = getenv("ROGUEOPTS")) != NULL)
 	parse_opts(env);
     if (env == NULL || whoami[0] == '\0')
-	if ((pw = getpwuid(getuid())) == NULL)
-	{
-	    printf("Say, who the hell are you?\n");
-	    exit(1);
-	}
-	else
-	    strucpy(whoami, pw->pw_name, strlen(pw->pw_name));
+	strucpy(whoami, md_getusername(md_getuid()), strlen(md_getusername(md_getuid())));
     if (env == NULL || fruit[0] == '\0')
 	strcpy(fruit, "slime-mold");
 
@@ -388,7 +376,7 @@ too_much()
 #endif
 
 #ifdef MAXLOAD
-    loadav(avec);
+    md_getloadavg(avec);
     return (avec[2] > (MAXLOAD / 10.0));
 #else
     return (ucount() > MAXUSERS);
@@ -401,7 +389,7 @@ too_much()
 int
 author()
 {
-    switch (getuid())
+    switch (md_getuid())
     {
 	case 24601:
 	    return TRUE;

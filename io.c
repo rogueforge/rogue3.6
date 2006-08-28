@@ -118,9 +118,20 @@ int ch;
  */
 
 int
-readchar()
+readchar(win)
+WINDOW *win;
 {
-    return( wgetch(cw) );
+    int ch;
+
+    ch = md_readchar(win);
+
+    if ((ch == 3) || (ch == 0))
+    {
+	quit(0);
+	return(27);
+    }
+
+    return(ch);
 }
 
 /*

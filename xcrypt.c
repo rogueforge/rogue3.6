@@ -53,7 +53,9 @@
 #include <sys/param.h>
 #include <pwd.h>
 #include <string.h>
-#include <arpa/inet.h>
+
+extern unsigned long int md_ntohl(unsigned long int x);
+extern unsigned long int md_htonl(unsigned long int x);
 
 #ifdef DEBUG
 # include <stdio.h>
@@ -363,8 +365,8 @@ des_setkey(key)
 	if (!des_initialised)
 		des_init();
 
-	rawkey0 = ntohl(*(unsigned int *) key);
-	rawkey1 = ntohl(*(unsigned int *) (key + 4));
+	rawkey0 = md_ntohl(*(unsigned int *) key);
+	rawkey1 = md_ntohl(*(unsigned int *) (key + 4));
 
 	if ((rawkey0 | rawkey1)
 	    && rawkey0 == old_rawkey0
@@ -569,12 +571,12 @@ des_cipher(in, out, salt, count)
 	setup_salt(salt);
 
 	memcpy(x, in, sizeof x);
-	rawl = ntohl(x[0]);
-	rawr = ntohl(x[1]);
+	rawl = md_ntohl(x[0]);
+	rawr = md_ntohl(x[1]);
 	retval = do_des(rawl, rawr, &l_out, &r_out, count);
 
-	x[0] = htonl(l_out);
-	x[1] = htonl(r_out);
+	x[0] = md_htonl(l_out);
+	x[1] = md_htonl(r_out);
 	memcpy(out, x, sizeof x);
 	return(retval);
 }

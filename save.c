@@ -216,7 +216,7 @@ char **envp;
     	return(FALSE);
     }
 	
-    if (!wizard && (unlink(file) < 0))
+    if (!wizard && (md_unlink_open_file(file, inf) < 0))
     {
 	endwin();
 	printf("Cannot unlink file\n");
