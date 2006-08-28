@@ -246,10 +246,10 @@ register struct thing *mp;
 			{
 			    register int oc;
 
-			    oc = obj->o_count--;
+			    oc = obj->o_count;
 			    obj->o_count = 1;
 			    msg("She stole %s!", inv_name(obj, TRUE));
-			    obj->o_count = oc;
+			    obj->o_count = oc - 1;
 			}
 			else
 			{
