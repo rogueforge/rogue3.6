@@ -93,7 +93,7 @@ option()
      */
     mvwaddstr(hw, LINES-1, 0, "--Press space to continue--");
     draw(hw);
-    wait_for(' ');
+    wait_for(hw,' ');
     clearok(cw, TRUE);
     touchwin(cw);
     after = FALSE;
@@ -138,7 +138,7 @@ WINDOW *win;
     {
 	wmove(win, oy, ox);
 	draw(win);
-	switch (readchar())
+	switch (readchar(win))
 	{
 	    case 't':
 	    case 'T':
@@ -187,7 +187,7 @@ WINDOW *win;
      * loop reading in the string, and put it in a temporary buffer
      */
     for (sp = buf;
-	(c = readchar()) != '\n' && c != '\r' && c != '\033' && c != '\007';
+	(c = readchar(win)) != '\n' && c != '\r' && c != '\033' && c != '\007';
 	wclrtoeol(win), draw(win))
     {
 	if (c == -1)

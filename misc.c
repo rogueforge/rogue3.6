@@ -406,7 +406,7 @@ get_dir()
     do
     {
 	gotit = TRUE;
-	switch (readchar())
+	switch (readchar(cw))
 	{
 	    case 'h': case'H': delta.y =  0; delta.x = -1;
 	    when 'j': case'J': delta.y =  1; delta.x =  0;

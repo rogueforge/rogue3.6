@@ -140,7 +140,7 @@ gethand()
 	    msg("Left or Right ring? ");
 	else
 	    msg("Left hand or right hand? ");
-	if ((c = readchar()) == 'l' || c == 'L')
+	if ((c = readchar(cw)) == 'l' || c == 'L')
 	    return LEFT;
 	else if (c == 'r' || c == 'R')
 	    return RIGHT;

@@ -266,11 +266,17 @@ register int number, sides;
 void
 tstp(int signum)
 {
+#ifdef SIGTSTP
+    signal(SIGTSTP, SIG_IGN);
+#endif
     mvcur(0, COLS - 1, LINES - 1, 0);
     endwin();
     fflush(stdout);
+#ifdef SIGTSTP
+    signal(SIGTSTP, SIG_DFL);
     kill(0, SIGTSTP);
     signal(SIGTSTP, tstp);
+#endif
     crmode();
     noecho();
     clearok(curscr, TRUE);
@@ -288,9 +294,13 @@ setup()
 #endif
 
 #ifndef DUMP
+#ifdef SIGHUP
     signal(SIGHUP, auto_save);
+#endif
     signal(SIGILL, auto_save);
+#ifdef SIGTRAP
     signal(SIGTRAP, auto_save);
+#endif
 #ifdef SIGIOT
     signal(SIGIOT, auto_save);
 #endif
@@ -305,13 +315,17 @@ setup()
 #ifdef SIGSYS
     signal(SIGSYS, auto_save);
 #endif
+#ifdef SIGPIPE
     signal(SIGPIPE, auto_save);
+#endif
     signal(SIGTERM, auto_save);
 #endif
 
     signal(SIGINT, quit);
 #ifndef DUMP
+#ifdef SIGQUIT
     signal(SIGQUIT, endit);
+#endif
 #endif
 #ifdef SIGTSTP
     signal(SIGTSTP, tstp);
@@ -319,8 +333,10 @@ setup()
 #ifdef CHECKTIME
     if (!author())
     {
+#ifdef SIGALRM
 	signal(SIGALRM, checkout);
 	alarm(CHECKTIME * 60);
+#endif
 	num_checks = 0;
     }
 #endif
@@ -410,15 +426,18 @@ checkout(int signum)
 	"Last warning.  You have %d minutes to leave",
     };
     int checktime;
-
+#ifdef SIGALRM
     signal(SIGALRM, checkout);
+#endif
     if (too_much())
     {
 	if (num_checks == 3)
 	    fatal("Sorry.  You took to long.  You are dead\n");
 	checktime = CHECKTIME / (num_checks + 1);
 	chmsg(msgs[num_checks++], checktime);
+#ifdef SIGALRM
 	alarm(checktime * 60);
+#endif
     }
     else
     {
@@ -427,7 +446,9 @@ checkout(int signum)
 	    chmsg("The load has dropped back down.  You have a reprieve.");
 	    num_checks = 0;
 	}
+#ifdef SIGALRM
 	alarm(CHECKTIME * 60);
+#endif
     }
 }
 

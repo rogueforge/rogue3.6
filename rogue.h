@@ -553,7 +553,7 @@ extern int command();
 extern int total_winner();
 extern void u_level();
 extern void identify();
-extern int wait_for(int);
+extern int wait_for(WINDOW *, int);
 extern void help();
 extern void search();
 extern void score(int, int, int);
@@ -705,3 +705,20 @@ extern char *md_getshell();
 extern char *md_gethostname();
 extern char *md_getroguedir();
 extern int md_getuid();
+
+#ifndef PATH_MAX
+#define PATH_MAX _MAX_PATH
+#endif
+
+#ifdef _WIN32
+#define fstat _fstat
+#define stat _stat
+#define open _open
+#define getpid _getpid
+#define fdopen _fdopen
+#define unlink _unlink
+#ifndef __MINGW32__
+#define fileno _fileno
+#endif
+#endif
+

@@ -69,7 +69,7 @@ endmsg()
 	wmove(cw, 0, mpos);
 	waddstr(cw, "--More--");
 	draw(cw);
-	wait_for(' ');
+	wait_for(cw,' ');
     }
     mvwaddstr(cw, 0, 0, msgbuf);
     wclrtoeol(cw);
@@ -210,16 +210,17 @@ status()
  */
 
 int
-wait_for(ch)
+wait_for(win, ch)
+WINDOW *win;
 register char ch;
 {
     register char c;
 
     if (ch == '\n')
-        while ((c = readchar()) != '\n' && c != '\r')
+        while ((c = readchar(win)) != '\n' && c != '\r')
 	    continue;
     else
-        while (readchar() != ch)
+        while (readchar(win) != ch)
 	    continue;
 }
 
@@ -237,7 +238,7 @@ char *message;
     touchwin(scr);
     wmove(scr, hero.y, hero.x);
     draw(scr);
-    wait_for(' ');
+    wait_for(scr,' ');
     clearok(cw, TRUE);
     touchwin(cw);
 }
