@@ -133,6 +133,7 @@ char **envp;
     cw = newwin(LINES, COLS, 0, 0);
     mw = newwin(LINES, COLS, 0, 0);
     hw = newwin(LINES, COLS, 0, 0);
+    keypad(cw,1);
     waswizard = wizard;
     new_level();			/* Draw current level */
     /*

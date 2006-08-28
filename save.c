@@ -196,6 +196,7 @@ char **envp;
     mw = newwin(LINES, COLS, 0, 0);
     hw = newwin(LINES, COLS, 0, 0);
     nocrmode();    
+    keypad(cw,1);
     mpos = 0;
     mvwprintw(cw, 0, 0, "%s: %s", file, ctime(&sbuf2.st_mtime));
 
