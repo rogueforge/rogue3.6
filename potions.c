@@ -41,14 +41,12 @@ quaff()
     {
 	case P_CONFUSE:
 	    if (off(player, ISHUH))
-	    {
 		msg("Wait, what's going on here. Huh? What? Who?");
 		if (on(player, ISHUH))
 		    lengthen(unconfuse, rnd(8)+HUHDURATION);
 		else
 		    fuse(unconfuse, 0, rnd(8)+HUHDURATION, AFTER);
 		player.t_flags |= ISHUH;
-	    }
 	    p_know[P_CONFUSE] = TRUE;
 	when P_POISON:
 	    if (!ISWEARING(R_SUSTSTR))
