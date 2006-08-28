@@ -300,8 +300,7 @@ register coord *tc;
 	    else
 		msg("A small dart whizzes by your ear and vanishes.");
     }
-    raw();	/* flush typeahead */
-    noraw();
+    flushinp();	/* flush typeahead */
     return(ch);
 }
 

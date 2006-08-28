@@ -287,8 +287,7 @@ tstp(int signum)
     clearok(curscr, TRUE);
     touchwin(cw);
     draw(cw);
-    raw();	/* flush input */
-    noraw();
+    flushinp();	/* flush input */
 }
 # endif
 
@@ -355,11 +354,7 @@ playit()
      * set up defaults for slow terminals
      */
 
-#if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H)
-    if (_tty.sg_ospeed < B1200)
-#else
     if (baudrate() < 1200)
-#endif
     {
 	terse = TRUE;
 	jump = TRUE;

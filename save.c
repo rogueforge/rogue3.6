@@ -20,9 +20,6 @@
 typedef struct stat STAT;
 
 extern char version[], encstr[];
-#if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H)
-extern bool _endwin;
-#endif
 
 STAT sbuf;
 
@@ -110,9 +107,6 @@ register FILE *savef;
     fstat(fileno(savef), &sbuf);
     fwrite("junk", 1, 5, savef);
     fseek(savef, 0L, 0);
-#if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H)
-    _endwin = TRUE;
-#endif
 
     encwrite(version,strlen(version)+1,savef);
     encwrite(&sbuf.st_ino,sizeof(sbuf.st_ino),savef);
@@ -230,20 +224,6 @@ char **envp;
     }
 
     environ = envp;
-#if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H)
-    if (!My_term && isatty(2))
-    {
-	register char	*sp;
-
-	_tty_ch = 2;
-	gettmode();
-	if ((sp = getenv("TERM")) == NULL)
-	    sp = Def_term;
-	setterm(sp);
-    }
-    else
-	setterm(Def_term);
-#endif
     strcpy(file_name, file);
     setup();
     clearok(curscr, TRUE);

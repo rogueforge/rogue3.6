@@ -162,8 +162,7 @@ teleport()
     }
     count = 0;
     running = FALSE;
-    raw();		/* flush typeahead */
-    noraw();
+    flushinp();		/* flush typeahead */
     return rm;
 }
 
@@ -182,21 +181,12 @@ passwd()
     mpos = 0;
     sp = buf;
     while ((c = getchar()) != '\n' && c != '\r' && c != '\033')
-#if !defined(_XOPEN_CURSES) && !defined(__NCURSES_H)
-	if (c == _tty.sg_kill)
-	    sp = buf;
-	else if (c == _tty.sg_erase && sp > buf)
-            sp--;
-	else
-	    *sp++ = c;
-#else
 	if (c == killchar())
 	    sp = buf;
-	else if (c == erasechar())
+	else if (c == erasechar() && sp > buf)
             sp--;
 	else
 	    *sp++ = c;
-#endif
     if (sp == buf)
 	return FALSE;
     *sp = '\0';
