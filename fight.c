@@ -227,8 +227,12 @@ register struct thing *mp;
 		    for (nobj = 0, list = pack; list != NULL; list = next(list))
 		    {
 			obj = (struct object *) ldata(list);
-			if (obj != cur_armor && obj != cur_weapon &&
-			    is_magic(obj) && rnd(++nobj) == 0)
+			if (obj != cur_armor &&
+                            obj != cur_weapon &&
+                            obj != cur_ring[LEFT] &&
+                            obj != cur_ring[RIGHT] && /* Nymph bug fix */
+			    is_magic(obj) &&
+                            rnd(++nobj) == 0)
 				steal = list;
 		    }
 		    if (steal != NULL)
