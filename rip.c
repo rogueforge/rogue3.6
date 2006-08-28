@@ -90,8 +90,8 @@ char monst;
 	char sc_name[80];
 	int sc_flags;
 	int sc_level;
-	int sc_uid;
-	char sc_monster;
+	char sc_login[8];
+	int sc_monster;
     } top_ten[10];
     register struct sc_ent *scp;
     register int i;
@@ -105,6 +105,9 @@ char monst;
 	"quit",
 	"A total winner",
     };
+    char scoreline[100];
+    char score_file[PATH_MAX];
+    int rogue_ver = 0, scorefile_ver = 0;
 
     if (flags != -1)
 	endwin();
@@ -130,7 +133,7 @@ char monst;
 	scp->sc_flags = RN;
 	scp->sc_level = RN;
 	scp->sc_monster = RN;
-	scp->sc_uid = RN;
+	scp->sc_login[0] = '\0';
     }
 
     if (wizard)
@@ -138,7 +141,21 @@ char monst;
 	    prflags = 1;
 	else if (strcmp(prbuf, "edit") == 0)
 	    prflags = 2;
-    encread((char *) top_ten, sizeof top_ten, fd);
+
+	encread((char *)scoreline, 100, fd);
+	sscanf(scoreline, "R%d %d\n", &rogue_ver, &scorefile_ver);
+
+	if ((rogue_ver == 36) && (scorefile_ver == 2))
+	    for(i = 0; i < 10; i++)
+	    {
+		encread((char *) &top_ten[i].sc_name, 80, fd);
+		encread((char *) &top_ten[i].sc_login, 8, fd);
+		encread((char *) scoreline, 100, fd);
+		sscanf(scoreline, " %d %d %d %d \n",
+		    &top_ten[i].sc_score,  &top_ten[i].sc_flags,
+		    &top_ten[i].sc_level,  &top_ten[i].sc_monster);
+	    }
+
     /*
      * Insert her in list if need be
      */
@@ -159,7 +176,8 @@ char monst;
 	    else
 		scp->sc_level = level;
 	    scp->sc_monster = monst;
-	    scp->sc_uid = getuid();
+	    strncpy(scp->sc_login, md_getusername(), 8);
+	    scp->sc_login[8] = '\0';
 	}
     }
     /*
@@ -181,12 +199,7 @@ char monst;
 	    }
 	    if (prflags == 1)
 	    {
-		struct passwd *pp, *getpwuid();
-
-		if ((pp = getpwuid(scp->sc_uid)) == NULL)
-		    printf(" (%d)", scp->sc_uid);
-		else
-		    printf(" (%s)", pp->pw_name);
+		printf(" (%s)", scp->sc_login);
 		putchar('\n');
 	    }
 	    else if (prflags == 2)
@@ -215,7 +228,17 @@ char monst;
     /*
      * Update the list file
      */
-    encwrite((char *) top_ten, sizeof top_ten, outf);
+    strcpy(scoreline, "R36 2\n");
+    encwrite(scoreline, 100, outf);
+    for(i = 0; i < 10; i++)
+    {
+	encwrite(&top_ten[i].sc_name, 80, outf);
+	encwrite(&top_ten[i].sc_login, 8, outf);
+	sprintf(scoreline, " %d %d %d %d \n",
+	    top_ten[i].sc_score,  top_ten[i].sc_flags,
+	    top_ten[i].sc_level,  top_ten[i].sc_monster);
+	encwrite(scoreline, 100, outf);
+    }
     fclose(outf);
 }
 
