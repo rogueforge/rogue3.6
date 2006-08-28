@@ -328,6 +328,7 @@ int signum;
 	clear();
 	move(LINES-1, 0);
 	draw(stdscr);
+	endwin();
 	score(purse, 1, 0);
 	exit(0);
     }
