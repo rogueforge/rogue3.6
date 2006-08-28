@@ -184,11 +184,14 @@ int y, x;
      * Let greedy ones guard gold
      */
     if (on(*tp, ISGREED) && off(*tp, ISRUN))
+    {
+	rp = roomin(&hero);
 	if (rp != NULL && rp->r_goldval)
 	{
 	    tp->t_dest = &rp->r_gold;
 	    tp->t_flags |= ISRUN;
 	}
+    }
     return it;
 }
 
