@@ -114,8 +114,8 @@ read_scroll()
 		/*
 		 * Search for an open place
 		 */
-		for (y = hero.y; y <= hero.y+1; y++)
-		    for (x = hero.x; x <= hero.x+1; x++)
+		for (y = hero.y-1; y <= hero.y+1; y++)
+		    for (x = hero.x-1; x <= hero.x+1; x++)
 		    {
 			/*
 			 * Don't put a monster in top of the player.
