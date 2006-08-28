@@ -345,7 +345,7 @@ new_thing()
 	    fix_stick(cur);
 	otherwise:
 	    debug("Picked a bad kind of object");
-	    wait_for(' ');
+	    wait_for(cw, ' ');
     }
     return item;
 }

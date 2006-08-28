@@ -255,7 +255,7 @@ int type;
     {
 	mvwaddstr(hw, LINES-1, 0, "--Press space to continue--");
 	draw(hw);
-	wait_for(' ');
+	wait_for(hw,' ');
 	clearok(cw, TRUE);
 	touchwin(cw);
     }
@@ -308,7 +308,7 @@ picky_inven()
     {
 	msg(terse ? "Item: " : "Which item do you wish to inventory: ");
 	mpos = 0;
-	if ((mch = readchar()) == ESCAPE)
+	if ((mch = readchar(cw)) == ESCAPE)
 	{
 	    msg("");
 	    return;
@@ -349,7 +349,7 @@ int type;
 	    if (terse)
 		addmsg(" what");
 	    msg("? (* for list): ");
-	    ch = readchar();
+	    ch = readchar(cw);
 	    mpos = 0;
 	    /*
 	     * Give the poor player a chance to abort the command

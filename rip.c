@@ -269,7 +269,7 @@ total_winner()
     addstr("a great profit and are admitted to the fighters guild.\n");
     mvaddstr(LINES - 1, 0, "--Press space to continue--");
     refresh();
-    wait_for(' ');
+    wait_for(stdscr, ' ');
     clear();
     mvaddstr(0, 0, "   Worth  Item");
     oldpurse = purse;

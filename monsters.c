@@ -119,7 +119,7 @@ wanderer()
 	if ((ch = mvwinch(stdscr, cp.y, cp.x)) == ERR)
 	{
 	    debug("Routine wanderer: mvwinch failed to %d,%d", cp.y, cp.x);
-	    wait_for('\n');
+	    wait_for(cw, '\n');
 	    return;
 	}
     } until(hr != rp && step_ok(ch));
@@ -205,7 +205,7 @@ genocide()
     if (!terse)
 	addmsg(" do you wish to wipe out");
     msg("? ");
-    while (!isalpha(c = readchar()))
+    while (!isalpha(c = readchar(cw)))
 	if (c == ESCAPE)
 	    return;
 	else

@@ -55,7 +55,7 @@ command()
 	    else if (count) ch = countch;
 	    else
 	    {
-		ch = readchar();
+		ch = readchar(cw);
 		if (mpos != 0 && !running)	/* Erase message if its there */
 		    msg("");
 	    }
@@ -78,7 +78,7 @@ command()
 		while (isdigit(ch))
 		{
 		    count = count * 10 + (ch - '0');
-		    ch = readchar();
+		    ch = readchar(cw);
 		}
 		countch = ch;
 		/*
@@ -109,7 +109,7 @@ command()
 		    if (count && !newcount)
 			ch = direction;
 		    else
-			ch = readchar();
+			ch = readchar(cw);
 		    switch (ch)
 		    {
 			case 'h': case 'j': case 'k': case 'l':
@@ -323,7 +323,7 @@ int signum;
 	mpos = 0;
     msg("Really quit?");
     draw(cw);
-    if (readchar() == 'y')
+    if (readchar(cw) == 'y')
     {
 	clear();
 	move(LINES-1, 0);
@@ -405,7 +405,7 @@ help()
     register int cnt;
 
     msg("Character you want help for (* for all): ");
-    helpch = readchar();
+    helpch = readchar(cw);
     mpos = 0;
     /*
      * If its not a *, print the right help string
@@ -443,7 +443,7 @@ help()
     wmove(hw, LINES-1, 0);
     wprintw(hw, "--Press space to continue--");
     draw(hw);
-    wait_for(' ');
+    wait_for(hw,' ');
     wclear(hw);
     draw(hw);
     wmove(cw, 0, 0);
@@ -463,7 +463,7 @@ identify()
     register char ch, *str;
 
     msg("What do you want identified? ");
-    ch = readchar();
+    ch = readchar(cw);
     mpos = 0;
     if (ch == ESCAPE)
     {
@@ -562,7 +562,7 @@ shell()
     noecho();
     crmode();
     in_shell = FALSE;
-    wait_for('\n');
+    wait_for(cw,'\n');
     clearok(cw, TRUE);
     touchwin(cw);
     draw(cw);
