@@ -83,7 +83,7 @@ bool wakeup;
 		if ((tp->t_oldch = mvinch(y, x)) == TRAP)
 		    tp->t_oldch =
 			(trap_at(y,x)->tr_flags&ISFOUND) ? TRAP : FLOOR;
-		if (tp->t_oldch == FLOOR && (rp->r_flags & ISDARK)
+		if (tp->t_oldch == FLOOR && (rp != NULL) && (rp->r_flags & ISDARK)
 		    && off(player, ISBLIND))
 			tp->t_oldch = ' ';
 	    }
