@@ -63,7 +63,9 @@ addmsg(char *fmt, ...)
 int
 endmsg()
 {
-    strcpy(huh, msgbuf);
+    strncpy(huh, msgbuf, 80);
+    huh[79] = 0;
+
     if (mpos)
     {
 	wmove(cw, 0, mpos);
