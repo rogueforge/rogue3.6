@@ -732,10 +732,6 @@ bool pr;
      * Empty the monsters pack
      */
     pitem = tp->t_pack;
-    /*
-     * Get rid of the monster.
-     */
-    remove_monster(&tp->t_pos, item);
     while (pitem != NULL)
     {
 	register struct object *obj;
@@ -747,4 +743,8 @@ bool pr;
 	fall(pitem, FALSE);
 	pitem = nexti;
     }
+    /*
+     * Get rid of the monster.
+     */
+    remove_monster(&tp->t_pos, item);
 }
