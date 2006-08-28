@@ -626,12 +626,13 @@ call()
 	msg("Call it: ");
     else
 	msg("What do you want to call it? ");
-    if (guess[obj->o_which] != NULL)
-	free(guess[obj->o_which]);
     strcpy(prbuf, elsewise);
     if (get_str(prbuf, cw) == NORM)
     {
+        if (guess[obj->o_which] != NULL)
+	    free(guess[obj->o_which]);
 	guess[obj->o_which] = malloc((unsigned int) strlen(prbuf) + 1);
+	if (guess[obj->o_which] != NULL)
 	strcpy(guess[obj->o_which], prbuf);
     }
 }
