@@ -130,7 +130,7 @@ init_player()
  * potions and scrolls
  */
 
-struct words rainbow[] = {
+char rainbow[][15] = {
     "Red",
     "Blue",
     "Green",
@@ -157,10 +157,10 @@ struct words rainbow[] = {
     "Tangerine"
 };
 
-#define NCOLORS (sizeof rainbow / sizeof *rainbow)
-int cNCOLORS = NCOLORS;
+#define NCOLORS (sizeof rainbow / sizeof (char *))
+const int cNCOLORS = NCOLORS;
 
-struct words sylls[] = {
+char *sylls[] = {
     "a", "ab", "ag", "aks", "ala", "an", "ankh", "app", "arg", "arze",
     "ash", "ban", "bar", "bat", "bek", "bie", "bin", "bit", "bjor",
     "blu", "bot", "bu", "byt", "comp", "con", "cos", "cre", "dalf",
@@ -180,10 +180,7 @@ struct words sylls[] = {
     "zant", "zap", "zeb", "zim", "zok", "zon", "zum",
 };
 
-#define NSYLLS (sizeof sylls / sizeof *sylls)
-int cNSYLLS = NSYLLS;
-
-struct words stones[] = {
+char stones[][15] = {
     "Agate",
     "Alexandrite",
     "Amethyst",
@@ -206,10 +203,10 @@ struct words stones[] = {
     "Turquoise",
 };
 
-#define NSTONES (sizeof stones / sizeof *stones)
-int cNSTONES = NSTONES;
+#define NSTONES (sizeof stones / sizeof (char *))
+const int cNSTONES = NSTONES;
 
-struct words wood[] = {
+char wood[][15] = {
     "Avocado wood",
     "Balsa",
     "Banyan",
@@ -234,10 +231,10 @@ struct words wood[] = {
     "Zebra wood",
 };
 
-#define NWOOD (sizeof wood / sizeof *wood)
-int cNWOOD = NWOOD;
+#define NWOOD (sizeof wood / sizeof (char *))
+const int cNWOOD = NWOOD;
 
-struct words metal[] = {
+char metal[][15] = {
     "Aluminium",
     "Bone",
     "Brass",
@@ -251,8 +248,8 @@ struct words metal[] = {
     "Zinc",
 };
 
-#define NMETAL (sizeof metal / sizeof *metal)
-int cNMETAL = NMETAL;
+#define NMETAL (sizeof metal / sizeof (char *))
+const int cNMETAL = NMETAL;
 
 struct magic_item things[NUMTHINGS] = {
     { "",			27 },	/* potion */
@@ -366,6 +363,9 @@ int a_chances[MAXARMORS] = {
     100
 };
 
+#define MAX3(a,b,c)     (a > b ? (a > c ? a : c) : (b > c ? b : c))
+static bool used[MAX3(NCOLORS, NSTONES, NWOOD)];
+
 /*
  * init_things
  *	Initialize the probabilities for types of things
@@ -394,7 +394,7 @@ init_colors()
     for (i = 0; i < MAXPOTIONS; i++)
     {
 	do
-	    str = rainbow[rnd(NCOLORS)].w_string;
+	    str = rainbow[rnd(NCOLORS)];
 	until (isupper(*str));
 	*str = tolower(*str);
 	p_colors[i] = str;
@@ -427,7 +427,7 @@ init_names()
 	    nsyl = rnd(3)+1;
 	    while(nsyl--)
 	    {
-		sp = sylls[rnd(NSYLLS)].w_string;
+		sp = sylls[rnd((sizeof sylls) / (sizeof (char *)))];
 		while(*sp)
 		    *cp++ = *sp++;
 	    }
@@ -458,7 +458,7 @@ init_stones()
     for (i = 0; i < MAXRINGS; i++)
     {
 	do
-	    str = stones[rnd(NSTONES)].w_string;
+	    str = stones[rnd(NSTONES)];
 	until (isupper(*str));
 	*str = tolower(*str);
 	r_stones[i] = str;
@@ -486,13 +486,13 @@ init_materials()
 	do
 	    if (rnd(100) > 50)
 	    {
-		str = metal[rnd(NMETAL)].w_string;
+		str = metal[rnd(NMETAL)];
 		if (isupper(*str))
 			ws_type[i] = "wand";
 	    }
 	    else
 	    {
-		str = wood[rnd(NWOOD)].w_string;
+		str = wood[rnd(NWOOD)];
 		if (isupper(*str))
 			ws_type[i] = "staff";
 	    }

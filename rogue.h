@@ -400,10 +400,6 @@ struct object {
     int o_group;			/* Group number for this object */
 };
 
-struct words {
-    char w_string[30];
-};
-
 /*
  * Now all the global variables
  */
@@ -500,7 +496,9 @@ extern coord ch_ret;
 extern char countch,direction,newcount;
 extern struct delayed_action d_list[20];
 extern int between;
+#ifdef CHECKTIME
 extern int num_checks;
+#endif
 extern coord nh;
 
 extern struct linked_list *find_mons(), *find_obj(), *get_item(), *new_item();
@@ -521,17 +519,15 @@ extern char lvl_mons[27],wand_mons[27];
 
 extern struct trap *trap_at();
 
-extern int cNCOLORS;
-extern int cNMETAL;
-extern int cNWOOD;
-extern int cNSTONES;
-extern int cNSYLLS;
-extern struct words rainbow[];
-extern struct words sylls[];
-extern struct words stones[];
-extern struct words wood[];
-extern struct words metal[];
+extern char rainbow[][15];
+extern char stones[][15];
+extern char wood[][15];
+extern char metal[][15];
 
+extern const int cNCOLORS;
+extern const int cNSTONES;
+extern const int cNWOOD;
+extern const int cNMETAL;
 
 extern int do_daemons(int);
 extern int do_fuses(int);

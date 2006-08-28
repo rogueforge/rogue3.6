@@ -99,26 +99,28 @@ int
 save_file(savef)
 register FILE *savef;
 {
-    int slines = LINES;
-    int scols = COLS;
+    char buf[80];
+    int ret;
     
     wmove(cw, LINES-1, 0);
     draw(cw);
-    fstat(fileno(savef), &sbuf);
-    fwrite("junk", 1, 5, savef);
     fseek(savef, 0L, 0);
 
-    encwrite(version,strlen(version)+1,savef);
-    encwrite(&sbuf.st_ino,sizeof(sbuf.st_ino),savef);
-    encwrite(&sbuf.st_dev,sizeof(sbuf.st_dev),savef);
-    encwrite(&sbuf.st_ctime,sizeof(sbuf.st_ctime),savef);
-    encwrite(&sbuf.st_mtime,sizeof(sbuf.st_mtime),savef);
-    encwrite(&slines,sizeof(slines),savef);
-    encwrite(&scols,sizeof(scols),savef);
+    memset(buf,0,80);
+    strcpy(buf,version);
+    encwrite(buf,80,savef);
+    memset(buf,0,80);
+    strcpy(buf,"R36 2\n");
+    encwrite(buf,80,savef);
+    memset(buf,0,80);
+    sprintf(buf,"%d x %d\n", LINES, COLS);
+    encwrite(buf,80,savef);
     
-    rs_save_file(savef);
+    ret = rs_save_file(savef);
 
     fclose(savef);
+
+    return(ret);
 }
 
 int
@@ -129,8 +131,8 @@ char **envp;
     register int inf;
     extern char **environ;
     char buf[80];
-    STAT sbuf2;
     int slines, scols;
+    int rogue_version = 0, savefile_version = 0;
 
     if (strcmp(file, "-r") == 0)
 	file = file_name;
@@ -141,45 +143,36 @@ char **envp;
     }
 
     fflush(stdout);
-    encread(buf, strlen(version) + 1, inf);
+    encread(buf, 80, inf);
+
     if (strcmp(buf, version) != 0)
     {
 	printf("Sorry, saved game is out of date.\n");
 	return FALSE;
     }
 
-    fstat(inf, &sbuf2);
-    fflush(stdout);
-    lseek(inf, 0L, 0);
-    encread(buf, strlen(version) + 1, inf);
-    encread(&sbuf.st_ino,sizeof(sbuf.st_ino), inf);
-    encread(&sbuf.st_dev,sizeof(sbuf.st_dev), inf);
-    encread(&sbuf.st_ctime,sizeof(sbuf.st_ctime), inf);
-    encread(&sbuf.st_mtime,sizeof(sbuf.st_mtime), inf);
-    encread(&slines,sizeof(slines),inf);
-    encread(&scols,sizeof(scols),inf);
+    encread(buf, 80, inf);
+    sscanf(buf, "R%d %d\n", &rogue_version, &savefile_version);
+
+    if ((rogue_version != 36) && (savefile_version != 2))
+    {
+	printf("Sorry, saved game format is out of date.\n");
+	return FALSE;
+    }
+
+    encread(buf,80,inf);
+    sscanf(buf,"%d x %d\n",&slines, &scols);
 
     /*
      * we do not close the file so that we will have a hold of the
      * inode for as long as possible
      */
 
-    if (!wizard)
-	if (sbuf2.st_ino != sbuf.st_ino || sbuf2.st_dev != sbuf.st_dev)
-	{
-	    printf("Sorry, saved game is not in the same file.\n");
-	    return FALSE;
-	}
-	else if (sbuf2.st_ctime - sbuf.st_ctime > 15)
-	{
-	    printf("Sorry, file has been touched.\n");
-	    return FALSE;
-	}
-
     initscr();
 	
     if (slines > LINES)
     {
+	endwin();
     	printf("Sorry, original game was played on a screen with %d lines.\n",slines);
 		printf("Current screen only has %d lines. Unable to restore game\n",LINES);
 		return(FALSE);
@@ -187,6 +180,7 @@ char **envp;
 	
     if (scols > COLS)
     {
+	endwin();
     	printf("Sorry, original game was played on a screen with %d columns.\n",scols);
 		printf("Current screen only has %d columns. Unable to restore game\n",COLS);
 		return(FALSE);
@@ -198,19 +192,9 @@ char **envp;
     nocrmode();    
     keypad(cw,1);
     mpos = 0;
-    mvwprintw(cw, 0, 0, "%s: %s", file, ctime(&sbuf2.st_mtime));
+    mvwprintw(cw, 0, 0, "%s", file);
 
-    /*
-     * defeat multiple restarting from the same place
-     */
-    if (!wizard	&& (sbuf2.st_nlink != 1))
-    {
-	endwin();
-	printf("Cannot restore from a linked file\n");
-	return FALSE;
-    }
-
-    if (rs_restore_file(inf) == FALSE)
+    if (rs_restore_file(inf) != 0)
     {
 	endwin();
 	printf("Cannot restore file\n");
@@ -233,6 +217,7 @@ char **envp;
     status();
     playit();
     /*NOTREACHED*/
+    return(0);
 }
 
 /*
@@ -245,15 +230,20 @@ unsigned int size;
 register FILE *outf;
 {
     register char *ep;
-
+    register char *cstart = start;
+    unsigned int o_size = size;
     ep = encstr;
 
-    while (size--)
+    while (size)
     {
-	putc(*(char *)start++ ^ *ep++, outf);
+	if (putc(*cstart++ ^ *ep++, outf) == EOF)
+	    return(o_size - size);
 	if (*ep == '\0')
 	    ep = encstr;
+	size--;
     }
+
+    return(o_size - size);
 }
 
 /*
@@ -267,15 +257,16 @@ register int inf;
 {
     register char *ep;
     register int read_size;
+    register char *cstart = start;
 
-    if ((read_size = read(inf, start, size)) == -1 || read_size == 0)
+    if ((read_size = read(inf, cstart, size)) == -1 || read_size == 0)
 	return read_size;
 
     ep = encstr;
 
     while (size--)
     {
-	*(char *)start++ ^= *ep++;
+	*cstart++ ^= *ep++;
 	if (*ep == '\0')
 	    ep = encstr;
     }
