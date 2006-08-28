@@ -2,153 +2,137 @@
 #  Makefile for rogue
 # %W% (Berkeley) %G%
 #
-HDRS=	rogue.h mach_dep.h
-OBJS=	vers.o armor.o chase.o command.o daemon.o daemons.o fight.o \
-	init.o io.o list.o main.o mdport.o misc.o monsters.o move.o new_level.o \
-	options.o pack.o passages.o potions.o rings.o rip.o rooms.o \
-	save.o scrolls.o state.o sticks.o things.o weapons.o wizard.o xcrypt.o
-POBJS=	vers.po armor.po chase.po command.po daemon.po daemons.po fight.po \
-	init.po io.po list.po main.po mdport.po misc.po monsters.po move.po new_level.po \
-	options.po pack.po passages.po potions.po rings.po rip.po rooms.po \
-	save.po scrolls.po state.po sticks.po things.po weapons.po wizard.po xcrypt.po
-CFILES=	vers.c armor.c chase.c command.c daemon.c daemons.c fight.c \
+
+DISTNAME=rogue3.6.3
+PROGRAM=rogue36
+
+O=o
+
+HDRS= 	rogue.h mach_dep.h
+
+OBJS1 = vers.$(O) armor.$(O) chase.$(O) command.$(O) daemon.$(O) daemons.$(O) \
+        fight.$(O) init.$(O) io.$(O) list.$(O) main.$(O) mdport.$(O) \
+	misc.$(O) monsters.$(O) move.$(O) new_level.$(O) options.$(O) 
+OBJS2 =	pack.$(O) passages.$(O) potions.$(O) rings.$(O) rip.$(O) rooms.$(O) \
+	save.$(O) scrolls.$(O) state.$(O) sticks.$(O) things.$(O) \
+	weapons.$(O) wizard.$(O) xcrypt.$(O)
+OBJS  = $(OBJS1) $(OBJS2)
+
+CFILES= vers.c armor.c chase.c command.c daemon.c daemons.c fight.c \
 	init.c io.c list.c main.c mdport.c misc.c monsters.c move.c new_level.c \
 	options.c pack.c passages.c potions.c rings.c rip.c rooms.c \
 	save.c scrolls.c state.c sticks.c things.c weapons.c wizard.c xcrypt.c
-CFLAGS= -g
-PROFLAGS= -p -O
-#LDFLAGS=-i	# For PDP-11's
-LDFLAGS=	# For VAXes
-VGRIND=/usr/ucb/vgrind
-CRLIB=	-lcurses
-#CRLIB=	/ra/csr/arnold/=lib/=curses/crlib
-#CRLIB=	/ra/csr/toy/_nc/crlib
-PCRLIB= -lcurses
-MISC=	Makefile TODO
-# for sites without sccs front end, GET= get
-#GET=	sccs get
-GET=	get
 
-.SUFFIXES: .po
 
-.c.po:
-	@echo $(CC) -c $(PROFLAGS) $?
-	@rm -f x.c
-	@ln $? x.c
-	@$(CC) -c $(PROFLAGS) x.c
-	@mv x.o $*.po
+MISC_C=
+DOCSRC= rogue.6 rogue.r
+DOCS  = $(PROGRAM).doc $(PROGRAM).cat
+MISC  = Makefile $(MISC_C) LICENSE $(PROGRAM).sln $(PROGRAM).vcproj $(DOCS) $(DOCSRC)
 
-.DEFAULT:
-	$(GET) $@
+CC    = gcc
+ROPTS =
+COPTS = -O3
+CFLAGS= $(COPTS) $(ROPTS)
+LIBS  = -lcurses
+RM    = rm -f
+LD    = $(CC)
+LDOUT = -o 
 
-a.out: $(HDRS) $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(CRLIB)
-	size a.out
+.SUFFIXES: .obj
 
-k.out: $(HDRS) $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(CRLIB) -o k.out
+.c.obj:
+	$(CC) $(CFLAGS) /c $*.c
 
-strip: rogue
-	strip rogue
-
-install: rogue
-	cp rogue $(DESTDIR)/usr/games/rogue
-
-p.out:	$(HDRS) $(POBJS)
-	@rm -f x.c
-	$(CC) $(PROFLAGS) $(LDFLAGS) $(POBJS) $(PCRLIB) -o p.out
-	size p.out
-
-newvers:
-	$(GET) -e vers.c
-	sccs delta -y vers.c
-
-main.o rip.o: mach_dep.h
-
-tags: $(HDRS) $(CFILES)
-	ctags -u $?
-	ed - tags < :ctfix
-	sort tags -o tags
-
-lint:
-	lint -hxbc $(CFILES) -lcurses > linterrs
+$(PROGRAM)$(EXE): $(HDRS) $(OBJS)
+	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) $(LDOUT)$@
 
 clean:
-	rm -f $(POBJS) $(OBJS) core rogue make.out ? rogue.tar vgrind.*
+	$(RM) $(OBJS1)
+	$(RM) $(OBJS2)
+	$(RM) core $(PROGRAM) $(PROGRAM).exe $(DISTNAME).tar $(DISTNAME).tar.gz 
+	$(RM) $(DISTNAME).zip
 
-count:
-	wc -l $(HDRS) $(CFILES)
-
-realcount:
-	cc -E $(CFILES) | ssp - | wc -l
-
-update:
-	ar uv .SAVE $(CFILES) $(HDRS) Makefile
-
-dist:
-	@mkdir dist
-	cp $(CFILES) $(HDRS) Makefile dist
-
-xtar: $(CFILES) $(HDRS) $(MISC)
-	rm -f rogue.tar
-	tar cf rogue.tar $? :ctfix
-	touch xtar
-
-vgrind:
-	@csh $(VGRIND) -t -h "Rogue Version 3.6" $(HDRS) *.c > vgrind.out
-	@ctags -v $(HDRS) *.c > index
-	@csh $(VGRIND) -t -x index > vgrind.out.tbl
-
-cfiles: $(CFILES)
-
-rogue rogue.exe: $(HDRS) $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(CRLIB) -o $@
-
-unixdist:
+dist.src:
 	make clean
-	make rogue
-	tar cf rogue36.tar rogue rogue.6 rogue.r
-	gzip rogue36.tar
-	mv rogue36.tar.gz rogue36-`uname`.tar.gz
+	tar cf $(DISTNAME)-src.tar $(CFILES) $(HDRS) $(MISC) $(DOCS)
+	gzip -f $(DISTNAME)-src.tar
 
 dist.irix:
-	make clean
-	make CFLAGS="-woff 1116 -mips3 -g -O2 -DDUMP" rogue
-	tar cf rogue36.tar rogue rogue.6 rogue.r
-	gzip rogue36.tar
-	mv rogue36.tar.gz rogue36-irix65.tar.gz
+	@$(MAKE) clean
+	@$(MAKE) CC=cc CFLAGS="-woff 1116 -O3" $(PROGRAM)
+#	tbl rogue.r | nroff -ms | colcrt - > $(PROGRAM).doc
+#	nroff -man rogue.6 | colcrt - > $(PROGRAM).cat
+	tar cf $(DISTNAME)-irix.tar $(PROGRAM) LICENSE $(DOCS)
+	gzip -f $(DISTNAME)-irix.tar
 
 dist.aix:
-	make clean
-	make CFLAGS="-qmaxmem=16768 -g -O2 -DDUMP" rogue
-	tar cf rogue36.tar rogue rogue.6 rogue.r
-	gzip rogue36.tar
-	mv rogue36.tar.gz rogue36-aix43.tar.gz
+	@$(MAKE) clean
+	@$(MAKE) CC=xlc CFLAGS="-qmaxmem=16768 -O3 -qstrict" $(PROGRAM)
+#	tbl rogue.r | nroff -ms | colcrt - > $(ROGUE).doc
+#	nroff -man rogue.6 | colcrt - > $(ROGUE).cat
+	tar cf $(DISTNAME)-aix.tar $(PROGRAM) LICENSE $(DOCS)
+	gzip -f $(DISTNAME)-aix.tar
 
 dist.linux:
-	make clean
-	make CFLAGS="-g -O2 -DDUMP" rogue
-	tar cf rogue36.tar rogue rogue.6 rogue.r
-	gzip rogue36.tar
-	mv rogue36.tar.gz rogue36-linux.tar.gz
+	@$(MAKE) clean
+	@$(MAKE) $(PROGRAM)
+#	nroff -t -ms -Tascii -c rogue.r | sed -e 's/.\x08//g' > $(PROGRAM).doc
+#	nroff -t -man -Tascii -c rogue.6 | sed -e 's/.\x08//g' > $(PROGRAM).cat
+	tar cf $(DISTNAME)-linux.tar $(PROGRAM) LICENSE $(DOCS)
+	gzip -f $(DISTNAME)-linux.tar
 
 dist.interix: 
-	make clean
-	make rogue
-	tar cf rogue36.tar rogue rogue.6 rogue.r
-	gzip rogue36.tar
-	mv rogue36.tar.gz rogue36-interix.tar.gz
+	@$(MAKE) clean
+	@$(MAKE) COPTS="-ansi" $(PROGRAM)
+#	groff -P-b -P-u -t -ms -Tascii rogue.r > $(PROGRAM).doc
+#	groff -P-b -P-u -man -Tascii rogue.6 > $(PROGRAM).cat
+	tar cf $(DISTNAME)-interix.tar $(PROGRAM) LICENSE $(DOCS)
+	gzip -f $(DISTNAME)-interix.tar	
 
 dist.cygwin:
-	make clean
-	make rogue
-	tar cf rogue36.tar rogue rogue.6 rogue.r
-	gzip rogue36.tar
-	mv rogue36.tar.gz rogue36-cygwin.tar.gz
+	@$(MAKE) --no-print-directory clean
+	@$(MAKE) COPTS="-I/usr/include/ncurses" --no-print-directory $(PROGRAM)
+#	groff -P-c -t -ms -Tascii rogue.r | sed -e 's/.\x08//g' > $(PROGRAM).doc
+#	groff -P-c -man -Tascii rogue.6 | sed -e 's/.\x08//g' > $(PROGRAM).cat
+	tar cf $(DISTNAME)-cygwin.tar $(PROGRAM).exe LICENSE $(DOCS)
+	gzip -f $(DISTNAME)-cygwin.tar
+
+#
+# Use MINGW32-MAKE to build this target
+#
+dist.mingw32:
+	@$(MAKE) --no-print-directory RM="cmd /c del" clean
+	@$(MAKE) --no-print-directory COPTS="-I../pdcurses" LIBS="../pdcurses/pdcurses.a" $(PROGRAM)
+	cmd /c del $(DISTNAME)-mingw32.zip
+	zip $(DISTNAME)-mingw32.zip $(PROGRAM).exe LICENSE $(DOCS)
+	
+#
+# Seperate doc targets for DJGPP prevent strange SIGSEGV in groff
+# in that environment.
+#
+doc.djgpp:
+	groff -t -ms -Tascii rogue.r | sed -e 's/.\x08//g' > $(PROGRAM).doc
+
+cat.djgpp:
+	groff -man -Tascii rogue.6 | sed -e 's/.\x08//g' > $(PROGRAM).cat
 	
 dist.djgpp:
-	del *.o 
-	del rogue.exe
-	make CRLIB=-lpdcurses LDFLAGS=-L$(DJDIR)/LIB CFLAGS="-g -O2 -DDUMP" rogue.exe
-	zip rogue36.zip rogue.exe rogue.6 rogue.r
+	@$(MAKE) --no-print-directory clean
+	@$(MAKE) --no-print-directory LDFLAGS="-L$(DJDIR)/LIB" \
+		LIBS="-lpdcur" $(PROGRAM)
+#	@$(MAKE) --no-print-directory doc.djgpp
+#	@$(MAKE) --no-print-directory cat.djgpp
+	rm -f $(DISTNAME)-djgpp.zip
+	zip $(DISTNAME)-djgpp.zip $(PROGRAM) LICENSE $(DOCS)
 
+#
+# Use NMAKE to build this target
+#
+dist.win32:
+	@$(MAKE) /NOLOGO O="obj" RM="-del" clean
+	@$(MAKE) /NOLOGO O="obj" CC="@CL" LD="link" LDOUT="/OUT:" EXE=".exe"\
+	    LIBS="/NODEFAULTLIB:LIBC ..\pdcurses\pdcurses.lib shell32.lib user32.lib Advapi32.lib" \
+	    COPTS="-nologo -D_CRT_SECURE_NO_DEPRECATE -I..\pdcurses \
+	    -Ox -wd4033 -wd4716" $(PROGRAM).exe
+	-del $(DISTNAME)-win32.zip
+	zip $(DISTNAME)-win32.zip $(PROGRAM).exe LICENSE $(DOCS)
