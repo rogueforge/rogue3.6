@@ -287,6 +287,8 @@ command()
 	    pick_up(take);
 	if (!running)
 	    door_stop = FALSE;
+	if (!after)     
+	    ntimes++;
     }
     /*
      * Kick off the rest if the daemons and fuses
