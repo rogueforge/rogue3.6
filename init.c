@@ -363,9 +363,6 @@ int a_chances[MAXARMORS] = {
     100
 };
 
-#define MAX3(a,b,c)     (a > b ? (a > c ? a : c) : (b > c ? b : c))
-static bool used[MAX3(NCOLORS, NSTONES, NWOOD)];
-
 /*
  * init_things
  *	Initialize the probabilities for types of things

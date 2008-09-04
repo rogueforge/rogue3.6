@@ -128,7 +128,7 @@ restore(file, envp)
 register char *file;
 char **envp;
 {
-    register int inf;
+    FILE *inf;
     extern char **environ;
     char buf[80];
     int slines, scols;
@@ -136,7 +136,8 @@ char **envp;
 
     if (strcmp(file, "-r") == 0)
 	file = file_name;
-    if ((inf = open(file, 0)) < 0)
+
+    if ((inf = fopen(file, "r")) == NULL)
     {
 	perror(file);
 	return FALSE;
@@ -201,7 +202,7 @@ char **envp;
     	return(FALSE);
     }
 	
-    if (!wizard && (md_unlink_open_file(file, inf) < 0))
+    if (!wizard && (md_unlink_open_file(file, fileno(inf)) < 0))
     {
 	endwin();
 	printf("Cannot unlink file\n");
@@ -218,6 +219,30 @@ char **envp;
     playit();
     /*NOTREACHED*/
     return(0);
+}
+
+static int encerrno = 0;
+
+int
+encerror()
+{
+    return encerrno;
+}
+
+void
+encseterr(int err)
+{
+    encerrno = err;
+}
+
+int
+encclearerr()
+{
+    int n = encerrno;
+
+    encerrno = 0;
+
+    return(n);
 }
 
 /*
@@ -253,13 +278,13 @@ int
 encread(start, size, inf)
 register void *start;
 unsigned int size;
-register int inf;
+register FILE *inf;
 {
     register char *ep;
     register int read_size;
     register char *cstart = start;
 
-    if ((read_size = read(inf, cstart, size)) == -1 || read_size == 0)
+    if ((read_size = fread(start, 1, size, inf)) == -1 || read_size == 0)
 	return read_size;
 
     ep = encstr;
