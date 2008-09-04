@@ -145,6 +145,8 @@ register struct thing *mp;
 			endmsg();
 		    }
 		    no_command += rnd(2)+2;
+		    if (no_command > 100 && food_left <= 0)
+		    	death('E');
 		when 'A':
 		    /*
 		     * Ants have poisonous bites
