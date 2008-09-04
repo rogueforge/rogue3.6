@@ -4,7 +4,7 @@
  * @(#)rogue.h	3.38 (Berkeley) 6/15/81
  */
 
-#include <limits.h>
+#include "mdport.h"
 
 /*
  * Maximum number of different things
@@ -691,37 +691,4 @@ extern int loadav(double *);
 extern char *xcrypt(const char *, const char *);
 extern int rs_restore_file(FILE *savef);
 extern int rs_save_file(FILE *savef);
-
-extern int md_memused();
-extern int md_readchar(WINDOW *);
-extern int md_shellescape();
-extern int md_flushinp();
-extern int md_killchar();
-extern int md_erasechar();
-extern int md_readchar(WINDOW *win);
-extern char *md_getpass(char *);
-extern int md_init();
-extern int md_unlink_open_file(char *, int);
-extern char *md_getusername();
-extern char *md_gethomedir();
-extern char *md_getshell();
-extern char *md_gethostname();
-extern char *md_getroguedir();
-extern int md_getuid();
-
-#ifndef PATH_MAX
-#define PATH_MAX _MAX_PATH
-#endif
-
-#ifdef _WIN32
-#define fstat _fstat
-#define stat _stat
-#define open _open
-#define getpid _getpid
-#define fdopen _fdopen
-#define unlink _unlink
-#ifndef __MINGW32__
-#define fileno _fileno
-#endif
-#endif
 

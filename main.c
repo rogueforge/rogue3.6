@@ -39,7 +39,7 @@ char **envp;
     int lowtime;
     time_t now;
 
-    md_init();
+    md_init(MD_STRIP_CTRL_KEYPAD);
 
     /*
      * check for print-score option
@@ -74,7 +74,7 @@ char **envp;
     if ((env = getenv("ROGUEOPTS")) != NULL)
 	parse_opts(env);
     if (env == NULL || whoami[0] == '\0')
-	strucpy(whoami, md_getusername(md_getuid()), strlen(md_getusername(md_getuid())));
+	strucpy(whoami, md_getusername(), strlen(md_getusername()));
     if (env == NULL || fruit[0] == '\0')
 	strcpy(fruit, "slime-mold");
 

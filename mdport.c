@@ -16,81 +16,261 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-#if defined(_WIN32)
-#include <Windows.h>
-#include <Lmcons.h>
-#include <process.h>
-#include <shlobj.h>
-#include <sys/types.h>
-#include <io.h>
-#include <conio.h>
-#undef MOUSE_MOVED
-#elif defined(__DJGPP__)
-#include <process.h>
-#else
-#include <pwd.h>
-#include <sys/utsname.h>
-#include <unistd.h>
-#include <utmpx.h>
-#include <sys/wait.h>
-#include <arpa/inet.h>
-#include <ctype.h>
-#endif
-
-#ifdef __INTERIX
-char *strdup(const char *s);
-#endif
-
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_WIN32) && !defined(__MINGW32__)
-#define PATH_MAX MAX_PATH
+#if defined(_WIN32)
+#include <Windows.h>
+#include <io.h>
+#include <sys/locking.h>
+#include <Lmcons.h>
+#include <conio.h>
+#pragma warning( disable: 4201 ) 
+#include <shlobj.h>
+#pragma warning( default: 4201 ) 
+#include <Shlwapi.h>
+#undef MOUSE_MOVED
 #endif
 
 #include <curses.h>
-#if !defined(DJGPP)
-#include <term.h>
+
+#include "mdport.h"
+
+#if defined(HAVE_SYS_TYPES)
+#include <sys/types.h>
 #endif
 
-#include <stdio.h>
+#if defined(HAVE_PROCESS_H)
+#include <process.h>
+#endif
+
+#if defined(HAVE_PWD_H)
+#include <pwd.h>
+#endif
+
+#if defined(HAVE_SYS_UTSNAME)
+#include <sys/utsname.h>
+#endif
+
+#if defined(HAVE_ARPA_INET_H)
+#include <arpa/inet.h> /* Solaris 2.8 required this for htonl() and ntohl() */
+#endif
+
+#if defined(HAVE_TERMIOS_H)
+#include <termios.h>
+#endif
+
+#if defined(HAVE_UNISTD_H)
+#ifndef __USE_GNU
+#define __USE_GNU
+#include <unistd.h>
+#undef __USE_GNU
+#else
+#include <unistd.h>
+#endif
+#endif
+
+#if defined(HAVE_TERM_H)
+#include <term.h>
+#elif defined(HAVE_NCURSES_TERM_H)
+#include <ncurses/term.h>
+#endif
+
+#if defined(HAVE_WORKING_FORK)
+#include <sys/wait.h>
+#endif
+
+#ifdef HAVE_UTMPX_H
+#include <utmpx.h>
+#endif
+
+#ifdef HAVE_ERRNO_H
+#include <errno.h>
+#endif
+
+#include <ctype.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <sys/stat.h>
 #include <signal.h>
 
-#define MOD_MOVE(c) (toupper(c) )
+#define NOOP(x) (x += 0)
+
+static int pass_ctrl_keypad = 1;
 
 void
-md_init()
+md_init(int options)
 {
-#ifdef __INTERIX
+#if defined(__INTERIX)
     char *term;
 
     term = getenv("TERM");
 
     if (term == NULL)
-        setenv("TERM","interix",1);
-#endif
-#if defined(__DJGPP__) || defined(_WIN32)
+        setenv("TERM","interix");
+#elif defined(__DJGPP__)
+    _fmode = _O_BINARY;
+#elif defined(_WIN32)
     _fmode = _O_BINARY;
 #endif
-#if defined(__CYGWIN__) || defined(__MSYS__)
-    ESCDELAY=250;
+
+#if defined(HAVE_ESCDELAY) || defined(NCURSES_VERSION)
+    ESCDELAY=64;
+#endif
+
+#if defined(DUMP)
+    md_onsignal_default();
+#else
+    md_onsignal_exit();
+#endif
+
+    if (options & MD_STRIP_CTRL_KEYPAD)
+        pass_ctrl_keypad = 0;
+    else
+        pass_ctrl_keypad = 1;
+}
+
+void
+md_onsignal_default(void)
+{
+#ifdef SIGHUP
+    signal(SIGHUP, SIG_DFL);
+#endif
+#ifdef SIGQUIT
+    signal(SIGQUIT, SIG_DFL);
+#endif
+#ifdef SIGILL
+    signal(SIGILL, SIG_DFL);
+#endif
+#ifdef SIGTRAP
+    signal(SIGTRAP, SIG_DFL);
+#endif
+#ifdef SIGIOT
+    signal(SIGIOT, SIG_DFL);
+#endif
+#ifdef SIGEMT
+    signal(SIGEMT, SIG_DFL);
+#endif
+#ifdef SIGFPE
+    signal(SIGFPE, SIG_DFL);
+#endif
+#ifdef SIGBUS
+    signal(SIGBUS, SIG_DFL);
+#endif
+#ifdef SIGSEGV
+    signal(SIGSEGV, SIG_DFL);
+#endif
+#ifdef SIGSYS
+    signal(SIGSYS, SIG_DFL);
+#endif
+#ifdef SIGTERM
+    signal(SIGTERM, SIG_DFL);
+#endif
+}
+
+void
+md_onsignal_exit(void)
+{
+#ifdef SIGHUP
+    signal(SIGHUP, SIG_DFL);
+#endif
+#ifdef SIGQUIT
+    signal(SIGQUIT, exit);
+#endif
+#ifdef SIGILL
+    signal(SIGILL, exit);
+#endif
+#ifdef SIGTRAP
+    signal(SIGTRAP, exit);
+#endif
+#ifdef SIGIOT
+    signal(SIGIOT, exit);
+#endif
+#ifdef SIGEMT
+    signal(SIGEMT, exit);
+#endif
+#ifdef SIGFPE
+    signal(SIGFPE, exit);
+#endif
+#ifdef SIGBUS
+    signal(SIGBUS, exit);
+#endif
+#ifdef SIGSEGV
+    signal(SIGSEGV, exit);
+#endif
+#ifdef SIGSYS
+    signal(SIGSYS, exit);
+#endif
+#ifdef SIGTERM
+    signal(SIGTERM, exit);
+#endif
+}
+
+extern void auto_save(int sig);
+extern void endit(int sig);
+extern void quit(int sig);
+
+void
+md_onsignal_autosave(void)
+{
+
+#ifdef SIGHUP
+    signal(SIGHUP, auto_save);
+#endif
+#ifdef SIGQUIT
+	signal(SIGQUIT, endit);
+#endif
+#ifdef SIGILL
+    signal(SIGILL, auto_save);
+#endif
+#ifdef SIGTRAP
+    signal(SIGTRAP, auto_save);
+#endif
+#ifdef SIGIOT
+    signal(SIGIOT, auto_save);
+#endif
+#ifdef SIGEMT
+    signal(SIGEMT, auto_save);
+#endif
+#ifdef SIGFPE
+    signal(SIGFPE, auto_save);
+#endif
+#ifdef SIGBUS
+    signal(SIGBUS, auto_save);
+#endif
+#ifdef SIGSEGV
+    signal(SIGSEGV, auto_save);
+#endif
+#ifdef SIGSYS
+    signal(SIGSYS, auto_save);
+#endif
+#ifdef SIGTERM
+    signal(SIGTERM, auto_save);
+#endif
+#ifdef SIGINT
+    signal(SIGINT, quit);
 #endif
 }
 
 int
-md_hasclreol()
+md_hasclreol(void)
 {
-#ifdef CE
-    return((CE != NULL) && (*CE != 0));
-#elif defined (clr_eol)
-    return((clr_eol != NULL) && (*clr_eol != 0));
-#elif !defined(__PDCURSES__)
-    return(clr_eol != NULL);
+#if defined(clr_eol)
+#ifdef NCURSES_VERSION
+    if (cur_term == NULL)
+	return(0);
+#ifdef CUR
+    if (CUR Strings == NULL)
 #else
+    if (cur_term->type.Strings == NULL)
+#endif
+	return(0);
+#endif
+    return((clr_eol != NULL) && (*clr_eol != 0));
+#elif defined(__PDCURSES__)
     return(TRUE);
+#else
+    return((CE != NULL) && (*CE != 0));
 #endif
 }
 
@@ -100,15 +280,17 @@ md_putchar(int c)
     putchar(c);
 }
 
+#ifdef _WIN32
 static int md_standout_mode = 0;
+#endif
 
 void
-md_raw_standout()
+md_raw_standout(void)
 {
 #ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo; 
     HANDLE hStdout;
-    int fgattr,bgattr;
+    WORD fgattr,bgattr;
 
     if (md_standout_mode == 0)
     {
@@ -126,12 +308,12 @@ md_raw_standout()
 }
 
 void
-md_raw_standend()
+md_raw_standend(void)
 {
 #ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO csbiInfo; 
     HANDLE hStdout;
-    int fgattr,bgattr;
+    WORD fgattr,bgattr;
 
     if (md_standout_mode == 1)
     {
@@ -149,11 +331,11 @@ md_raw_standend()
 }
 
 int
-md_unlink_open_file(char *file, int inf)
+md_unlink_open_file(const char *file, FILE *inf)
 {
 #ifdef _WIN32
-    _close(inf);
-    _chmod(file, 0600);
+    fclose(inf);
+    (void) _chmod(file, 0600);
     return( _unlink(file) );
 #else
     return(unlink(file));
@@ -164,7 +346,7 @@ int
 md_unlink(char *file)
 {
 #ifdef _WIN32
-    _chmod(file, 0600);
+    (void) _chmod(file, 0600);
     return( _unlink(file) );
 #else
     return(unlink(file));
@@ -172,44 +354,72 @@ md_unlink(char *file)
 }
 
 int
-md_creat(char *file, int mode)
+md_chmod(const char *filename, int mode)
 {
-    int fd;
 #ifdef _WIN32
-    mode = _S_IREAD | _S_IWRITE;
-    fd = _open(file,O_CREAT | O_EXCL | O_WRONLY, mode);
+    return( _chmod(filename, mode) );
 #else
-    fd = open(file,O_CREAT | O_EXCL | O_WRONLY, mode);
+    return( chmod(filename, mode) );
 #endif
-
-    return(fd);
 }
 
-
-int
-md_normaluser()
+void
+md_normaluser(void)
 {
-#ifndef _WIN32
-    if (setuid(getuid()) == 0)
-        if (setgid(getgid()) == 0)
-            return -1;
-#endif
+#if defined(HAVE_GETGID) && defined(HAVE_GETUID)
+        gid_t realgid = getgid();
+        uid_t realuid = getuid();
 
-    return 0;
+#if defined(HAVE_SETRESGID)
+    if (setresgid(-1, realgid, realgid) != 0) {
+#elif defined (HAVE_SETREGID)
+    if (setregid(realgid, realgid) != 0) {
+#elif defined (HAVE_SETGID)
+        if (setgid(realgid) != 0) {
+#else
+        if (0) {
+#endif
+                perror("Could not drop setgid privileges.  Aborting.");
+                exit(1);
+    }
+
+#if defined(HAVE_SETRESUID)
+    if (setresuid(-1, realuid, realuid) != 0) {
+#elif defined(HAVE_SETREUID)
+    if (setreuid(realuid, realuid) != 0) {
+#elif defined(HAVE_SETUID)
+        if (setuid(realuid) != 0) {
+#else
+        if (0) {
+#endif
+        perror("Could not drop setuid privileges.  Aborting.");
+        exit(1);
+    }
+#endif
 }
 
-int
-md_getuid()
+uid_t
+md_getuid(void)
 {
-#ifndef _WIN32
+#ifdef HAVE_GETUID
     return( getuid() );
 #else
     return(42);
 #endif
 }
 
+pid_t
+md_getpid(void)
+{
+#ifdef _WIN32
+    return( _getpid() );
+#else
+    return( getpid() );
+#endif
+}
+
 char *
-md_getusername(int uid)
+md_getusername(void)
 {
     static char login[80];
     char *l = NULL;
@@ -219,13 +429,9 @@ md_getusername(int uid)
     TCHAR buffer[UNLEN + 1];
 
     mybuffer = buffer;
-    if (uid != md_getuid())
-	strcpy(mybuffer, "someone");
-    else
 	GetUserName(mybuffer,&size);
     l = mybuffer;
-#endif
-#if !defined(_WIN32) && !defined(DJGPP)
+#elif defined(HAVE_GETPWUID)&& !defined(__DJGPP__)
     struct passwd *pw;
 
     pw = getpwuid(getuid());
@@ -246,7 +452,7 @@ md_getusername(int uid)
 }
 
 char *
-md_gethomedir()
+md_gethomedir(void)
 {
     static char homedir[PATH_MAX];
     char *h = NULL;
@@ -273,14 +479,31 @@ md_gethomedir()
 #endif
 
     if ( (h == NULL) || (*h == '\0') )
+    {
         if ( (h = getenv("HOME")) == NULL )
+	{
+            if ( (h = getenv("HOMEDRIVE")) == NULL)
                 h = "";
-
+            else
+            {
     strncpy(homedir,h,PATH_MAX-1);
+                homedir[PATH_MAX-1] = 0;
+
+                if ( (h = getenv("HOMEPATH")) == NULL)
+                    h = "";
+            }
+	}
+    }
+
+
+    len = strlen(homedir);
+    strncat(homedir,h,PATH_MAX-len-1);
     len = strlen(homedir);
 
-    if ((len > 0) && (homedir[len-1] == slash))
-	homedir[len-1] = 0;
+    if ((len > 0) && (homedir[len-1] != slash)) {
+        homedir[len] = slash;
+        homedir[len+1] = 0;
+    }
 
     return(homedir);
 }
@@ -296,7 +519,7 @@ md_sleep(int s)
 }
 
 char *
-md_getshell()
+md_getshell(void)
 {
     static char shell[PATH_MAX];
     char *s = NULL;
@@ -323,23 +546,17 @@ md_getshell()
 }
 
 int
-md_shellescape()
+md_shellescape(void)
 {
-#if (!defined(_WIN32) && !defined(__DJGPP__))
+#if defined(HAVE_WORKING_FORK)
     int ret_status;
     int pid;
     void (*myquit)(int);
     void (*myend)(int);
-#endif
     char *sh;
 
     sh = md_getshell();
 
-#if defined(_WIN32)
-    return((int)_spawnl(_P_WAIT,sh,"shell",NULL,0));
-#elif defined(__DJGPP__)
-    return ( spawnl(P_WAIT,sh,"shell",NULL,0) );
-#else
     while((pid = fork()) < 0)
         sleep(1);
 
@@ -348,9 +565,8 @@ md_shellescape()
         /*
          * Set back to original user, just in case
          */
-        if (setuid(getuid()) == 0)
-            if (setgid(getgid()) == 0)
-                execl(sh == NULL ? "/bin/sh" : sh, "shell", "-i", NULL);
+        md_normaluser();
+        execl(sh == NULL ? "/bin/sh" : sh, "shell", "-i", NULL);
         perror("No shelly");
         _exit(-1);
     }
@@ -368,8 +584,13 @@ md_shellescape()
         signal(SIGQUIT, myend);
 #endif
     }
-
     return(ret_status);
+#elif defined(HAVE__SPAWNL) 
+    return((int)_spawnl(_P_WAIT,md_getshell(),"shell",NULL,0));
+#elif defined(HAVE_SPAWNL)
+    return ( spawnl(P_WAIT,md_getshell(),"shell",NULL,0) );
+#else
+	return(0);
 #endif
 }
 
@@ -385,45 +606,7 @@ directory_exists(char *dirname)
 }
 
 char *
-md_getroguedir()
-{
-    static char path[1024];
-    char *end,*home;
-
-    if ( (home = getenv("ROGUEHOME")) != NULL)
-    {
-        if (*home)
-        {
-            strncpy(path, home, 80);
-	    path[79] = '\0';
-
-            end = &path[strlen(path)-1];
-
-            while( (end >= path) && ((*end == '/') || (*end == '\\')))
-                *end-- = '\0';
-
-            if (directory_exists(path))
-                return(path);
-        }
-    }
-
-    if (directory_exists("/var/games/roguelike"))
-        return("/var/games/roguelike");
-    if (directory_exists("/var/lib/roguelike"))
-        return("/var/lib/roguelike");
-    if (directory_exists("/var/roguelike"))
-        return("/var/roguelike");
-    if (directory_exists("/usr/games/lib"))
-        return("/usr/games/lib");
-    if (directory_exists("/games/roguelik"))
-        return("/games/roguelik");
-    if (directory_exists(md_gethomedir()))
-	return(md_gethomedir());
-    return("");
-}
-
-char *
-md_getrealname(int uid)
+md_getrealname(uid_t uid)
 {
     static char uidstr[20];
 #if !defined(_WIN32) && !defined(DJGPP)
@@ -442,18 +625,10 @@ md_getrealname(int uid)
 #endif
 }
 
-extern char *xcrypt(char *key, char *salt);
-
-char *
-md_crypt(char *key, char *salt)
-{
-    return( xcrypt(key,salt) );
-}
-
 char *
 md_getpass(char *prompt)
 {
-#ifdef _WIN32
+#ifndef HAVE_GETPASS
     static char password_buffer[9];
     char *p = password_buffer;
     int c, count = 0;
@@ -496,7 +671,7 @@ md_getpass(char *prompt)
 
         /* Add to password if it isn't full */
         if (p < password_buffer + max_length - 1)
-            *p++ = c;
+            *p++ = (char) c;
         else
             count++;
     }
@@ -506,219 +681,107 @@ md_getpass(char *prompt)
 
    return password_buffer;
 #else
-   return( (char *) getpass(prompt) );
-#endif
-}
-
-
-int md_endian = 0x01020304;
-
-unsigned long int
-md_ntohl(unsigned long int x)
-{
-#ifdef _WIN32
-    if ( *((char *)&md_endian) == 0x01 )
-        return(x);
-    else
-        return( ((x & 0x000000ffU) << 24) |
-                ((x & 0x0000ff00U) <<  8) |
-                ((x & 0x00ff0000U) >>  8) |
-                ((x & 0xff000000U) >> 24) );
-#else
-    return( ntohl(x) );
-#endif
-}
-
-unsigned long int
-md_htonl(unsigned long int x)
-{
-#ifdef _WIN32
-    if ( *((char *)&md_endian) == 0x01 )
-        return(x);
-    else
-        return( ((x & 0x000000ffU) << 24) |
-                ((x & 0x0000ff00U) <<  8) |
-                ((x & 0x00ff0000U) >>  8) |
-                ((x & 0xff000000U) >> 24) );
-#else
-    return( htonl(x) );
+   return( getpass(prompt) );
 #endif
 }
 
 int
-md_ucount()
+md_erasechar(void)
 {
-#ifdef __DJGPP__
-    return(1);
-#elif defined(_WIN32)
-    return(1);
-#else
-    struct utmpx *up=NULL;
-    int count=0;
-
-    setutxent();    
-    do
-    {
-	up = getutxent();
-	if (up && up->ut_type == USER_PROCESS)
-	    count++;
-    } while(up != NULL);
-   
-   endutxent();
-
-   return(count);
-#endif
-}
-
-int
-md_getloadavg(double *avg)
-{
-#if defined(__GLIBC__) || defined(_BSD)
-    if (getloadavg(avg, 3) == -1)
-#endif
-    {
-	avg[0] = avg[1] = avg[2] = 0.0;
-	return -1;
-    }
-}
-
-long
-md_random()
-{
-#ifdef _WIN32
-    return(rand());
-#else
-    return( random() );
-#endif
-}
-
-void
-md_srandom(unsigned x)
-{
-#ifdef _WIN32
-    srand(x);
-#else
-    srandom(x);
-#endif
-}
-
-int
-md_rand()
-{
-#ifdef _WIN32
-    return(rand());
-#else
-    return(lrand48() & 0x7fffffff);
-#endif
-}
-
-void
-md_srand(int seed)
-{
-#ifdef _WIN32
-    srand(seed);
-#else
-    srand48(seed);
-#endif
-}
-
-char *
-md_strdup(const char *s)
-{
-#ifdef _WIN32
-    return( _strdup(s) );
-#else
-    return(strdup(s));
-#endif
-}
-
-long
-md_memused()
-{
-#ifdef _WIN32
-    MEMORYSTATUS stat;
-
-    GlobalMemoryStatus(&stat);
-
-    return((long)stat.dwTotalPageFile);
-#else
-    return( (long)sbrk(0) );
-#endif
-}
-
-char *
-md_gethostname()
-{
-    static char nodename[80];
-    char *n = NULL;
-#if !defined(_WIN32) && !defined(__DJGPP__)
-    struct utsname ourname;
-
-    if (uname(&ourname) == 0)
-        n = ourname.nodename;
-#endif
-    if ((n == NULL) || (*n == '\0'))
-        if ( (n = getenv("COMPUTERNAME")) == NULL)
-            if ( (n = getenv("HOSTNAME")) == NULL)
-                n = "localhost";
-
-    strncpy(nodename, n, 80);
-    nodename[79] = 0;
-
-    return(nodename);
-}
-
-int
-md_erasechar()
-{
-#ifdef BSD
-    return(_tty.sg_erase); /* process erase character */
-#elif defined(USG5_0)
-    return(_tty.c_cc[VERASE]); /* process erase character */
-#else /* USG5_2 .... curses */
+#ifdef HAVE_ERASECHAR
     return( erasechar() ); /* process erase character */
+#elif defined(VERASE)
+    return(_tty.c_cc[VERASE]); /* process erase character */
+#else
+    return(_tty.sg_erase); /* process erase character */
 #endif
 }
 
 int
-md_killchar()
+md_killchar(void)
 {
-#ifdef BSD
-    return(_tty.sg_kill);
-#elif defined(USG5_0)
-    return(_tty.c_cc[VKILL]);
-#else /* USG5_2 ..... curses */
+#ifdef HAVE_KILLCHAR
     return( killchar() );
-#endif
-}
-
-/*
- * unctrl:
- *	Print a readable version of a certain character
- */
-
-const char *
-md_unctrl(char ch)
-{
-#if USG5_0
-    extern char *_unctrl[];		/* Defined in curses library */
-
-    return _unctrl[ch&0177];
+#elif defined(VKILL)
+    return(_tty.c_cc[VKILL]);
 #else
-    return( unctrl(ch) );
+    return(_tty.sg_kill);
 #endif
 }
 
-void
-md_flushinp()
+int
+md_dsuspchar(void)
 {
-#ifdef BSD
-    ioctl(0, TIOCFLUSH);
-#elif defined(USG5_0)
-    ioctl(_tty_ch,TCFLSH,0)
-#else /* USG5_2.... curses */
-    flushinp();
+#if defined(VDSUSP)			/* POSIX has priority */
+    struct termios attr;
+    tcgetattr(STDIN_FILENO, &attr);
+    return( attr.c_cc[VDSUSP] );
+#elif defined(TIOCGLTC)
+    struct ltchars ltc;
+    ioctl(1, TIOCGLTC, &ltc);
+    return(ltc.t_dsuspc);
+#elif defined(_POSIX_VDISABLE)
+    return(_POSIX_VDISABLE);
+#else
+    return(0);
 #endif
+}
+
+int
+md_setdsuspchar(int c)
+{
+#if defined(VDSUSP)			/* POSIX has priority */
+    struct termios attr;
+    tcgetattr(STDIN_FILENO, &attr);
+    attr.c_cc[VDSUSP] = c;
+    tcgetattr(STDIN_FILENO, &attr);
+#elif defined(TIOCSLTC)
+    struct ltchars ltc;
+    ioctl(1, TIOCGLTC, &ltc);
+    ltc.t_dsuspc = c;
+    ioctl(1, TIOCSLTC, &ltc);
+#else
+    NOOP(c);
+#endif
+    return(0);
+}
+
+int
+md_suspchar(void)
+{
+#if defined(VSUSP)			/* POSIX has priority */
+    struct termios attr;
+    tcgetattr(STDIN_FILENO, &attr);
+    return( attr.c_cc[VSUSP] );
+#elif defined(TIOCGLTC)
+    struct ltchars ltc;
+    ioctl(1, TIOCGLTC, &ltc);
+    return(ltc.t_suspc);
+#elif defined(_POSIX_VDISABLE)
+    return(_POSIX_VDISABLE);
+#else
+    return(0);
+#endif
+}
+
+int
+md_setsuspchar(int c)
+{
+#if defined(VSUSP)			/* POSIX has priority */
+    struct termios attr;
+    tcgetattr(STDIN_FILENO, &attr);
+    attr.c_cc[VSUSP] = c;
+    tcgetattr(STDIN_FILENO, &attr);
+#elif defined(TIOCSLTC)
+    struct ltchars ltc;
+    ioctl(1, TIOCGLTC, &ltc);
+    ltc.t_suspc = c;
+    ioctl(1, TIOCSLTC, &ltc);
+#else
+    NOOP(c);
+#endif
+
+    return(0);
 }
 
 /*
@@ -1007,38 +1070,93 @@ md_flushinp()
 #define M_KEYPAD 2
 #define M_TRAIL  3
 
+#ifndef CTRL
+#define CTRL(ch) (ch & 0x1F)
+#endif
+
+int undo[5];
+int uindex = -1;
+
+int
+reread()
+{
+    int redo;
+
+    if (uindex < 0)
+        return 0;
+
+    redo = undo[0];
+    undo[0] = undo[1];
+    undo[1] = undo[2];
+    undo[2] = undo[3];
+    undo[3] = undo[4];
+    uindex--;
+    return redo;
+}
+
+void
+unread(int c)
+{
+    if (uindex >= 4)
+        abort();
+
+    undo[++uindex] = c;
+}
+
 int
 md_readchar(WINDOW *win)
 {
     int ch = 0;
     int lastch = 0;
+    int wch = 0;
     int mode = M_NORMAL;
     int mode2 = M_NORMAL;
+    int nodelayf = 0;
+    int count = 0;
 
     for(;;)
     {
-        ch = wgetch(win);
-
-        if (ch == ERR)      /* timed out waiting for valid sequence */
-        {                   /* flush input so far and start over    */
-            mode = M_NORMAL;
-            nocbreak();
-            raw();
-            ch = 27;
+        if (mode == M_NORMAL && uindex >= 0)
+        {
+	    wch = ch = reread();
             break;
         }
+
+	wch = ch = wgetch(win);
+
+	if (ch == ERR) /* timed out  or error */
+	{
+	    if (nodelayf)               /* likely timed out, switch to */
+	    {                           /* normal mode and block on    */
+	        mode = M_NORMAL;        /* next read                   */
+	    	nodelayf = 0;
+		nodelay(win,0);
+	    }
+	    else if (count > 10)        /* after 10 errors assume      */
+	        auto_save(0);           /* input stream is broken and  */
+	    else                        /* auto save and exit          */
+	    	count++;
+
+	    continue;
+	}
+
+        count = 0;			/* reset input error count     */
 
         if (mode == M_TRAIL)
         {
             if (ch == '^')              /* msys console  : 7,5,6,8: modified*/
-                ch = MOD_MOVE( toupper(lastch) );
-
-            if (ch == '~')              /* cygwin console: 1,5,6,4: normal  */
+		ch = CTRL( toupper(lastch) );
+	    else if (ch == '~')		/* cygwin console: 1,5,6,4: normal  */
                 ch = tolower(lastch);   /* windows telnet: 1,5,6,4: normal  */
                                         /* msys console  : 7,5,6,8: normal  */
-
-            if (mode2 == M_ESC)         /* cygwin console: 1,5,6,4: modified*/
-                ch = MOD_MOVE( toupper(ch) );
+	    else if (mode2 == M_ESC)		/* cygwin console: 1,5,6,4: modified*/
+		ch = CTRL( toupper(ch) );
+            else
+            {
+                mode = M_NORMAL;
+                unread(ch);
+                continue;
+            }
 
             break;
         }
@@ -1048,12 +1166,14 @@ md_readchar(WINDOW *win)
             if (ch == 27)
             {
                 mode2 = M_ESC;
+		unread(ch);
                 continue;
             }
 
             if ((ch == 'F') || (ch == 'O') || (ch == '['))
             {
                 mode = M_KEYPAD;
+		unread(ch);
                 continue;
             }
 
@@ -1062,17 +1182,19 @@ md_readchar(WINDOW *win)
             {
                 /* Cygwin Console   */
                 /* PuTTY            */
-                case KEY_LEFT : ch = MOD_MOVE('H'); break;
-                case KEY_RIGHT: ch = MOD_MOVE('L'); break;
-                case KEY_UP   : ch = MOD_MOVE('K'); break;
-                case KEY_DOWN : ch = MOD_MOVE('J'); break;
-                case KEY_HOME : ch = MOD_MOVE('Y'); break;
-                case KEY_PPAGE: ch = MOD_MOVE('U'); break;
-                case KEY_NPAGE: ch = MOD_MOVE('N'); break;
-                case KEY_END  : ch = MOD_MOVE('B'); break;
+		case KEY_LEFT :	ch = CTRL('H'); break;
+		case KEY_RIGHT: ch = CTRL('L'); break;
+		case KEY_UP   : ch = CTRL('K'); break;
+		case KEY_DOWN : ch = CTRL('J'); break;
+		case KEY_HOME : ch = CTRL('Y'); break;
+		case KEY_PPAGE: ch = CTRL('U'); break;
+		case KEY_NPAGE: ch = CTRL('N'); break;
+		case KEY_END  : ch = CTRL('B'); break;
 
-                default: break;
-            }
+	        default: mode = M_NORMAL;
+                         mode2 = M_NORMAL;
+                         unread(ch);
+                         continue;}
 
             break;
         }
@@ -1082,19 +1204,19 @@ md_readchar(WINDOW *win)
             switch(ch)
             {
                 /* ESC F - Interix Console codes */
-                case   '^': ch = MOD_MOVE('H'); break;      /* Shift-Left       */
-                case   '$': ch = MOD_MOVE('L'); break;      /* Shift-Right      */
+		case   '^': ch = CTRL('H'); break;	/* Shift-Left	    */
+		case   '$': ch = CTRL('L'); break;	/* Shift-Right	    */
 
                 /* ESC [ - Interix Console codes */
                 case   'H': ch = 'y'; break;            /* Home             */
-                case     1: ch = MOD_MOVE('K'); break;      /* Ctl-Keypad Up    */
-                case     2: ch = MOD_MOVE('J'); break;      /* Ctl-Keypad Down  */
-                case     3: ch = MOD_MOVE('L'); break;      /* Ctl-Keypad Right */
-                case     4: ch = MOD_MOVE('H'); break;      /* Ctl-Keypad Left  */
-                case   263: ch = MOD_MOVE('Y'); break;      /* Ctl-Keypad Home  */
-                case    19: ch = MOD_MOVE('U'); break;      /* Ctl-Keypad PgUp  */
-                case    20: ch = MOD_MOVE('N'); break;      /* Ctl-Keypad PgDn  */
-                case    21: ch = MOD_MOVE('B'); break;      /* Ctl-Keypad End   */
+		case     1: ch = CTRL('K'); break;	/* Ctl-Keypad Up    */
+		case     2: ch = CTRL('J'); break;	/* Ctl-Keypad Down  */
+		case     3: ch = CTRL('L'); break;	/* Ctl-Keypad Right */
+		case     4: ch = CTRL('H'); break;	/* Ctl-Keypad Left  */
+		case   263: ch = CTRL('Y'); break;	/* Ctl-Keypad Home  */
+		case    19: ch = CTRL('U'); break;	/* Ctl-Keypad PgUp  */
+		case    20: ch = CTRL('N'); break;	/* Ctl-Keypad PgDn  */
+		case    21: ch = CTRL('B'); break;	/* Ctl-Keypad End   */
 
                 /* ESC [ - Cygwin Console codes */
                 case   'G': ch = '.'; break;            /* Keypad 5         */
@@ -1107,10 +1229,10 @@ md_readchar(WINDOW *win)
                 case   '4': lastch = 'b'; mode=M_TRAIL; break;  /* End      */
 
                 /* ESC O - PuTTY */
-                case   'D': ch = MOD_MOVE('H'); break;
-                case   'C': ch = MOD_MOVE('L'); break;
-                case   'A': ch = MOD_MOVE('K'); break;
-                case   'B': ch = MOD_MOVE('J'); break;
+		case   'D': ch = CTRL('H'); break;
+		case   'C': ch = CTRL('L'); break;
+		case   'A': ch = CTRL('K'); break;
+		case   'B': ch = CTRL('J'); break;
                 case   't': ch = 'h'; break;
                 case   'v': ch = 'l'; break;
                 case   'x': ch = 'k'; break;
@@ -1123,13 +1245,18 @@ md_readchar(WINDOW *win)
             }
 
             if (mode != M_KEYPAD)
+	    {
+		unread(ch);
                 continue;
         }
+	}
 
         if (ch == 27)
         {
-            halfdelay(1);
+	    nodelay(win,1);
             mode = M_ESC;
+	    nodelayf = 1;
+	    unread(ch);
             continue;
         }
 
@@ -1161,84 +1288,307 @@ md_readchar(WINDOW *win)
             case KEY_B2     : ch = 'u'; break;
 
 #ifdef KEY_SLEFT
-            case KEY_SRIGHT  : ch = MOD_MOVE('L'); break;
-            case KEY_SLEFT   : ch = MOD_MOVE('H'); break;
+	    case KEY_SRIGHT  : ch = CTRL('L'); break;
+	    case KEY_SLEFT   : ch = CTRL('H'); break;
 #ifdef KEY_SUP
-            case KEY_SUP     : ch = MOD_MOVE('K'); break;
-            case KEY_SDOWN   : ch = MOD_MOVE('J'); break;
+	    case KEY_SUP     : ch = CTRL('K'); break;
+	    case KEY_SDOWN   : ch = CTRL('J'); break;
 #endif
-            case KEY_SHOME   : ch = MOD_MOVE('Y'); break;
-            case KEY_SPREVIOUS:ch = MOD_MOVE('U'); break;
-            case KEY_SEND    : ch = MOD_MOVE('B'); break;
-            case KEY_SNEXT   : ch = MOD_MOVE('N'); break;
+	    case KEY_SHOME   : ch = CTRL('Y'); break;
+	    case KEY_SPREVIOUS:ch = CTRL('U'); break;
+	    case KEY_SEND    : ch = CTRL('B'); break;
+	    case KEY_SNEXT   : ch = CTRL('N'); break;
 #endif
-            case 0x146       : ch = MOD_MOVE('K'); break;   /* Shift-Up     */
-            case 0x145       : ch = MOD_MOVE('J'); break;   /* Shift-Down   */
+	    case 0x146       : ch = CTRL('K'); break; 	/* Shift-Up	*/
+	    case 0x145       : ch = CTRL('J'); break; 	/* Shift-Down	*/
 
 #ifdef CTL_RIGHT
-            case CTL_RIGHT   : ch = MOD_MOVE('L'); break;
-            case CTL_LEFT    : ch = MOD_MOVE('H'); break;
-            case CTL_UP      : ch = MOD_MOVE('K'); break;
-            case CTL_DOWN    : ch = MOD_MOVE('J'); break;
-            case CTL_HOME    : ch = MOD_MOVE('Y'); break;
-            case CTL_PGUP    : ch = MOD_MOVE('U'); break;
-            case CTL_END     : ch = MOD_MOVE('B'); break;
-            case CTL_PGDN    : ch = MOD_MOVE('N'); break;
+	    case CTL_RIGHT   : ch = CTRL('L'); break;
+	    case CTL_LEFT    : ch = CTRL('H'); break;
+	    case CTL_UP      : ch = CTRL('K'); break;
+	    case CTL_DOWN    : ch = CTRL('J'); break;
+	    case CTL_HOME    : ch = CTRL('Y'); break;
+	    case CTL_PGUP    : ch = CTRL('U'); break;
+	    case CTL_END     : ch = CTRL('B'); break;
+	    case CTL_PGDN    : ch = CTRL('N'); break;
 #endif
 #ifdef KEY_EOL
-            case KEY_EOL     : ch = MOD_MOVE('B'); break;
+	    case KEY_EOL     : ch = CTRL('B'); break;
 #endif
 
 #ifndef CTL_PAD1
             /* MSYS rxvt console */
-            case 511         : ch = MOD_MOVE('J'); break; /* Shift Dn */
-            case 512         : ch = MOD_MOVE('J'); break; /* Ctl Down */
-            case 514         : ch = MOD_MOVE('H'); break; /* Ctl Left */
-            case 516         : ch = MOD_MOVE('L'); break; /* Ctl Right*/
-            case 518         : ch = MOD_MOVE('K'); break; /* Shift Up */
-            case 519         : ch = MOD_MOVE('K'); break; /* Ctl Up   */
+	    case 511	     : ch = CTRL('J'); break; /* Shift Dn */
+	    case 512         : ch = CTRL('J'); break; /* Ctl Down */
+	    case 514	     : ch = CTRL('H'); break; /* Ctl Left */
+	    case 516	     : ch = CTRL('L'); break; /* Ctl Right*/
+	    case 518	     : ch = CTRL('K'); break; /* Shift Up */
+	    case 519	     : ch = CTRL('K'); break; /* Ctl Up   */
 #endif
 
 #ifdef CTL_PAD1
-            case CTL_PAD1   : ch = MOD_MOVE('B'); break;
-            case CTL_PAD2   : ch = MOD_MOVE('J'); break;
-            case CTL_PAD3   : ch = MOD_MOVE('N'); break;
-            case CTL_PAD4   : ch = MOD_MOVE('H'); break;
+	    case CTL_PAD1   : ch = CTRL('B'); break;
+	    case CTL_PAD2   : ch = CTRL('J'); break;
+	    case CTL_PAD3   : ch = CTRL('N'); break;
+	    case CTL_PAD4   : ch = CTRL('H'); break;
             case CTL_PAD5   : ch = '.'; break;
-            case CTL_PAD6   : ch = MOD_MOVE('L'); break;
-            case CTL_PAD7   : ch = MOD_MOVE('Y'); break;
-            case CTL_PAD8   : ch = MOD_MOVE('K'); break;
-            case CTL_PAD9   : ch = MOD_MOVE('U'); break;
+	    case CTL_PAD6   : ch = CTRL('L'); break;
+	    case CTL_PAD7   : ch = CTRL('Y'); break;
+	    case CTL_PAD8   : ch = CTRL('K'); break;
+	    case CTL_PAD9   : ch = CTRL('U'); break;
 #endif
 
 #ifdef ALT_RIGHT
-            case ALT_RIGHT  : ch = MOD_MOVE('L'); break;
-            case ALT_LEFT   : ch = MOD_MOVE('H'); break;
-            case ALT_DOWN   : ch = MOD_MOVE('J'); break;
-            case ALT_HOME   : ch = MOD_MOVE('Y'); break;
-            case ALT_PGUP   : ch = MOD_MOVE('U'); break;
-            case ALT_END    : ch = MOD_MOVE('B'); break;
-            case ALT_PGDN   : ch = MOD_MOVE('N'); break;
+	    case ALT_RIGHT  : ch = CTRL('L'); break;
+	    case ALT_LEFT   : ch = CTRL('H'); break;
+	    case ALT_DOWN   : ch = CTRL('J'); break;
+	    case ALT_HOME   : ch = CTRL('Y'); break;
+	    case ALT_PGUP   : ch = CTRL('U'); break;
+	    case ALT_END    : ch = CTRL('B'); break;
+	    case ALT_PGDN   : ch = CTRL('N'); break;
 #endif
 
 #ifdef ALT_PAD1
-            case ALT_PAD1   : ch = MOD_MOVE('B'); break;
-            case ALT_PAD2   : ch = MOD_MOVE('J'); break;
-            case ALT_PAD3   : ch = MOD_MOVE('N'); break;
-            case ALT_PAD4   : ch = MOD_MOVE('H'); break;
+	    case ALT_PAD1   : ch = CTRL('B'); break;
+	    case ALT_PAD2   : ch = CTRL('J'); break;
+	    case ALT_PAD3   : ch = CTRL('N'); break;
+	    case ALT_PAD4   : ch = CTRL('H'); break;
             case ALT_PAD5   : ch = '.'; break;
-            case ALT_PAD6   : ch = MOD_MOVE('L'); break;
-            case ALT_PAD7   : ch = MOD_MOVE('Y'); break;
-            case ALT_PAD8   : ch = MOD_MOVE('K'); break;
-            case ALT_PAD9   : ch = MOD_MOVE('U'); break;
+	    case ALT_PAD6   : ch = CTRL('L'); break;
+	    case ALT_PAD7   : ch = CTRL('Y'); break;
+	    case ALT_PAD8   : ch = CTRL('K'); break;
+	    case ALT_PAD9   : ch = CTRL('U'); break;
+#endif
+#ifdef KEY_BACKSPACE /* NCURSES in Keypad mode sends this for Ctrl-H */
+            case KEY_BACKSPACE: ch = CTRL('H'); break;
 #endif
         }
 
         break;
     }
 
-    nocbreak();     /* disable halfdelay mode if on */
-    raw();
+
+    if (nodelayf)
+        nodelay(win,0);
+
+    uindex = -1;
+
+    if (!pass_ctrl_keypad && (ch != wch))
+        switch(ch) 
+        {
+	    case CTRL('H'):
+	    case CTRL('L'):
+	    case CTRL('K'):
+	    case CTRL('J'):
+	    case CTRL('Y'):
+	    case CTRL('U'):
+	    case CTRL('N'):
+	    case CTRL('B'):
+                return(ch + 0x40);
+        }
 
     return(ch & 0x7F);
+}
+
+#if defined(LOADAV) && defined(HAVE_NLIST_H) && defined(HAVE_NLIST)
+/*
+ * loadav:
+ *	Looking up load average in core (for system where the loadav()
+ *	system call isn't defined
+ */
+
+#include <nlist.h>
+
+struct nlist avenrun = {
+    "_avenrun"
+};
+
+int
+md_loadav(double *avg)
+{
+    int kmem;
+
+    if ((kmem = open("/dev/kmem", 0)) < 0)
+	goto bad;
+    nlist(NAMELIST, &avenrun);
+    if (avenrun.n_type == 0)
+    {
+	close(kmem);
+bad:
+	avg[0] = 0.0;
+	avg[1] = 0.0;
+	avg[2] = 0.0;
+	return -1;
+    }
+
+    lseek(kmem, avenrun.n_value, 0);
+    read(kmem, (char *) avg, 3 * sizeof (double));
+    close(kmem);
+    return 0;
+}
+#else
+int
+md_loadav(double *avg)
+{
+#if defined(HAVE_LOADAV)
+    loadav(avg);
+    return(0);
+#elif defined(HAVE_GETLOADAVG)
+    int ret;
+    ret = getloadavg(avg,3);
+    return (ret == 3) ? 0 : -1;
+#else
+    avg[0] = avg[1] = avg[2] = 0;
+    return(-1);
+#endif
+}
+#endif
+
+#ifndef NSIG
+#define NSIG 32
+#endif
+
+void
+md_ignoreallsignals(void)
+{
+	int i;
+
+	for (i = 0; i < NSIG; i++)
+		signal(i, SIG_IGN);
+}
+
+void
+md_tstphold(void)
+{
+#ifdef SIGTSTP
+    /*
+     * If a process can be suspended, this code wouldn't work
+     */
+# ifdef SIG_HOLD
+    signal(SIGTSTP, SIG_HOLD);
+# else
+    signal(SIGTSTP, SIG_IGN);
+# endif
+#endif
+}
+
+void
+md_tstpresume(void (*tstp)(int))
+{
+#ifdef SIGTSTP
+    signal(SIGTSTP, tstp);
+#endif
+}
+
+void
+md_tstpsignal(void)
+{
+#ifdef SIGTSTP
+    kill(0, SIGTSTP);		/* send actual signal and suspend process */
+#endif
+}
+
+#if defined(CHECKTIME)
+void
+md_start_checkout_timer(int time)
+{
+    int  checkout();
+
+#if defined(HAVE_ALARM) && defined(SIGALRM)
+    signal(SIGALRM, checkout);
+	alarm(time);
+#endif
+}
+
+void
+md_stop_checkout_timer(void)
+{
+#if defined(SIGALRM)
+    signal(SIGALRM, SIG_IGN);
+#endif
+}
+#endif
+
+long
+md_memused()
+{
+#ifdef _WIN32
+    MEMORYSTATUS stat;
+
+    GlobalMemoryStatus(&stat);
+
+    return((long)stat.dwTotalPageFile);
+#else
+    return( (long)sbrk(0) );
+#endif
+}
+
+int
+md_ucount()
+{
+#if defined(HAVE_UTMPX_H)
+    struct utmpx *up=NULL;
+    int count=0;
+
+    setutxent();
+    do
+    {
+        up = getutxent();
+        if (up && up->ut_type == USER_PROCESS)
+            count++;
+    } while(up != NULL);
+
+   endutxent();
+
+   return(count);
+#else
+   return(1)
+#endif
+}
+
+int
+md_lockfile(FILE *fp)
+{
+    int fd;
+    int ret;
+
+    fflush(fp);
+    rewind(fp);
+
+#ifdef _WIN32
+    fd = _fileno(fp);
+    ret = _locking(fd,_LK_LOCK,1);
+#else
+    fd = fileno(fp);
+
+    while((ret = lockf(fd, F_LOCK, 1)) == -1)
+	if (errno != EINTR)
+            break;
+#endif
+
+    return ret;
+}
+
+int
+md_unlockfile(FILE *fp)
+{
+    int fd;
+    int ret;
+
+    fflush(fp);
+    rewind(fp);
+
+
+#ifdef _WIN32
+    fd = _fileno(fp);
+    ret = _locking(fd,_LK_UNLCK,1);
+#else
+    fd = fileno(fp);
+    
+    while( (ret = lockf(fd, F_ULOCK, 1)) == -1)
+        if (errno != EINTR)
+            break;
+#endif
+
+    return ret;
 }

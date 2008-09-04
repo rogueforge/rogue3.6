@@ -48,14 +48,19 @@
  * only the crypt() interface. This is required to make binaries linked
  * against crypt.o exportable or re-exportable from the USA.
  */
-
+#ifndef HAVE_CRYPT
 #include <sys/types.h>
 #include <sys/param.h>
 #include <pwd.h>
 #include <string.h>
 
-extern unsigned long int md_ntohl(unsigned long int x);
-extern unsigned long int md_htonl(unsigned long int x);
+static unsigned int _endian = 1;
+static char *_le = (char *) &_endian;
+
+#ifndef ntohl
+#define ntohl(x) (!*_le?(x):((x)&0xffU)<<24|((x)&0xff00U)<<8|((x)&0xff0000U)>>8|((x)&0xff000000U)>>24)
+#define htonl(x) (!*_le?(x):((x)&0xffU)<<24|((x)&0xff00U)<<8|((x)&0xff0000U)>>8|((x)&0xff000000U)>>24)
+#endif
 
 #ifdef DEBUG
 # include <stdio.h>
@@ -365,8 +370,8 @@ des_setkey(key)
 	if (!des_initialised)
 		des_init();
 
-	rawkey0 = md_ntohl(*(unsigned int *) key);
-	rawkey1 = md_ntohl(*(unsigned int *) (key + 4));
+	rawkey0 = ntohl(*(unsigned int *) key);
+	rawkey1 = ntohl(*(unsigned int *) (key + 4));
 
 	if ((rawkey0 | rawkey1)
 	    && rawkey0 == old_rawkey0
@@ -571,12 +576,12 @@ des_cipher(in, out, salt, count)
 	setup_salt(salt);
 
 	memcpy(x, in, sizeof x);
-	rawl = md_ntohl(x[0]);
-	rawr = md_ntohl(x[1]);
+	rawl = ntohl(x[0]);
+	rawr = ntohl(x[1]);
 	retval = do_des(rawl, rawr, &l_out, &r_out, count);
 
-	x[0] = md_htonl(l_out);
-	x[1] = md_htonl(r_out);
+	x[0] = htonl(l_out);
+	x[1] = htonl(r_out);
 	memcpy(out, x, sizeof x);
 	return(retval);
 }
@@ -697,3 +702,4 @@ xcrypt(key, setting)
 
 	return((char *)output);
 }
+#endif
