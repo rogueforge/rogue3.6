@@ -214,7 +214,7 @@ char **envp;
     setup();
     clearok(curscr, TRUE);
     touchwin(cw);
-    srand(getpid());
+    srand(md_getpid());
     status();
     playit();
     /*NOTREACHED*/
