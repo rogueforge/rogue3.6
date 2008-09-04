@@ -103,7 +103,7 @@ char **envp;
     if (seed > 0)
         dnum = seed;
     else
-        dnum = lowtime + md_getpid();
+        dnum = lowtime + getpid();
 
     if (wizard || env)
 	printf("Hello %s, welcome to dungeon #%d", whoami, dnum);

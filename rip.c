@@ -142,15 +142,15 @@ char monst;
 	else if (strcmp(prbuf, "edit") == 0)
 	    prflags = 2;
 
-	encread((char *)scoreline, 100, fd);
+	encread((char *)scoreline, 100, outf);
 	sscanf(scoreline, "R%d %d\n", &rogue_ver, &scorefile_ver);
 
 	if ((rogue_ver == 36) && (scorefile_ver == 2))
 	    for(i = 0; i < 10; i++)
 	    {
-		encread((char *) &top_ten[i].sc_name, 80, fd);
-		encread((char *) &top_ten[i].sc_login, 8, fd);
-		encread((char *) scoreline, 100, fd);
+		encread((char *) &top_ten[i].sc_name, 80, outf);
+		encread((char *) &top_ten[i].sc_login, 8, outf);
+		encread((char *) scoreline, 100, outf);
 		sscanf(scoreline, " %d %d %d %c \n",
 		    &top_ten[i].sc_score,  &top_ten[i].sc_flags,
 		    &top_ten[i].sc_level,  &top_ten[i].sc_monster);
