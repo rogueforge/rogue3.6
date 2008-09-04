@@ -92,10 +92,20 @@ char **envp;
 	    exit(1);
     time(&now);
     lowtime = (int) now;
-    dnum = (wizard && getenv("SEED") != NULL ?
-	atoi(getenv("SEED")) :
-	lowtime + getpid());
-    if (wizard)
+
+    env = getenv("SEED");
+
+    if (env)
+        seed = atoi(env);
+    else
+        seed = 0;
+
+    if (seed > 0)
+        dnum = seed;
+    else
+        dnum = lowtime + md_getpid();
+
+    if (wizard || env)
 	printf("Hello %s, welcome to dungeon #%d", whoami, dnum);
     else
 	printf("Hello %s, just a moment while I dig the dungeon...", whoami);
