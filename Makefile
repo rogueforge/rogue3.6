@@ -3,8 +3,8 @@
 # %W% (Berkeley) %G%
 #
 
-DISTNAME=rogue3.6.3
-PROGRAM=rogue36
+DISTNAME=rogue3.6.4
+PROGRAM=rogue
 
 O=o
 
@@ -32,7 +32,7 @@ MISC  = Makefile $(MISC_C) LICENSE $(PROGRAM).sln $(PROGRAM).vcproj $(DOCS) $(DO
 CC    = gcc
 ROPTS =
 COPTS = -O3
-CFLAGS= $(COPTS) $(ROPTS)
+CFLAGS= $(COPTS) $(ROPTS) -DSCOREFILE=\"rogue36.scr\"
 LIBS  = -lcurses
 RM    = rm -f
 LD    = $(CC)
@@ -81,6 +81,12 @@ dist.linux:
 	tar cf $(DISTNAME)-linux.tar $(PROGRAM) LICENSE $(DOCS)
 	gzip -f $(DISTNAME)-linux.tar
 
+debug.linux:
+	@$(MAKE) clean
+	@$(MAKE) COPTS="-g" $(PROGRAM)
+#	groff -P-c -t -ms -Tascii rogue.r | sed -e 's/.\x08//g' > $(PROGRAM).doc
+#	groff -man rogue.6 | sed -e 's/.\x08//g' > $(PROGRAM).cat
+	
 dist.interix: 
 	@$(MAKE) clean
 	@$(MAKE) COPTS="-ansi" $(PROGRAM)
