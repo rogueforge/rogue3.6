@@ -51,7 +51,6 @@ register char monst;
     register struct tm *lt;
     time_t date;
     char buf[80];
-    struct tm *localtime();
 
     time(&date);
     lt = localtime(&date);
@@ -107,22 +106,15 @@ char monst;
 	"A total winner",
     };
     char scoreline[100];
-    char score_file[PATH_MAX];
     int rogue_ver = 0, scorefile_ver = 0;
 
     if (flags != -1)
 	endwin();
-    signal(SIGINT, SIG_DFL);
-    if (flags != -1)
-    {
-	addstr("[Press return to continue]");
-	get_str(prbuf, stdscr);
-    }
     /*
      * Open file and read list
      */
 
-    if ((fd = open(SCOREFILE, O_RDWR|O_CREAT)) < 0)
+    if ((fd = open(SCOREFILE, 2)) < 0)
 	return;
     outf = fdopen(fd, "w");
 
@@ -137,21 +129,30 @@ char monst;
 	scp->sc_login[0] = '\0';
     }
 
+    signal(SIGINT, SIG_DFL);
+    if ((flags != -1) && (flags != 1))
+    {
+	mvaddstr(LINES-1, 0, "[Press return to continue]");
+	draw(stdscr);
+	prbuf[0] = 0;
+	get_str(prbuf, stdscr);
+	endwin();
+    }
     if (wizard)
 	if (strcmp(prbuf, "names") == 0)
 	    prflags = 1;
 	else if (strcmp(prbuf, "edit") == 0)
 	    prflags = 2;
 
-	encread((char *)scoreline, 100, outf);
+	encread(scoreline, 100, fd);
 	sscanf(scoreline, "R%d %d\n", &rogue_ver, &scorefile_ver);
 
 	if ((rogue_ver == 36) && (scorefile_ver == 2))
 	    for(i = 0; i < 10; i++)
 	    {
-		encread((char *) &top_ten[i].sc_name, 80, outf);
-		encread((char *) &top_ten[i].sc_login, 8, outf);
-		encread((char *) scoreline, 100, outf);
+		encread((char *) &top_ten[i].sc_name, 80, fd);
+		encread((char *) &top_ten[i].sc_login, 8, fd);
+		encread(scoreline, 100, fd);
 		sscanf(scoreline, " %d %d %d %c \n",
 		    &top_ten[i].sc_score,  &top_ten[i].sc_flags,
 		    &top_ten[i].sc_level,  &top_ten[i].sc_monster);
@@ -207,7 +208,7 @@ char monst;
 	    {
 		fflush(stdout);
 		if (fgets(prbuf,sizeof(prbuf),stdin) == NULL)
-		    return;
+		    prbuf[0] = 0;
 		if (prbuf[0] == 'd')
 		{
 		    for (sc2 = scp; sc2 < &top_ten[9]; sc2++)
@@ -229,12 +230,14 @@ char monst;
     /*
      * Update the list file
      */
-    strcpy(scoreline, "R36 2\n");
+    memset(scoreline,0,100);
+    sprintf(scoreline, "R36 %d\n", 2);
     encwrite(scoreline, 100, outf);
     for(i = 0; i < 10; i++)
     {
-	encwrite(&top_ten[i].sc_name, 80, outf);
-	encwrite(&top_ten[i].sc_login, 8, outf);
+	encwrite((char *)&top_ten[i].sc_name, 80, outf);
+	encwrite((char *)&top_ten[i].sc_login, 8, outf);
+	memset(scoreline,0,100);
 	sprintf(scoreline, " %d %d %d %d \n",
 	    top_ten[i].sc_score,  top_ten[i].sc_flags,
 	    top_ten[i].sc_level,  top_ten[i].sc_monster);

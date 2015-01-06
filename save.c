@@ -104,6 +104,8 @@ register FILE *savef;
     
     wmove(cw, LINES-1, 0);
     draw(cw);
+    fstat(fileno(savef), &sbuf);
+    fwrite("junk", 1, 5, savef);
     fseek(savef, 0L, 0);
 
     memset(buf,0,80);
@@ -128,16 +130,16 @@ restore(file, envp)
 register char *file;
 char **envp;
 {
-    FILE *inf;
-    extern char **environ;
+    register int inf;
     char buf[80];
     int slines, scols;
     int rogue_version = 0, savefile_version = 0;
+    STAT sbuf2;
+    FILE *savef;
 
     if (strcmp(file, "-r") == 0)
 	file = file_name;
-
-    if ((inf = fopen(file, "r")) == NULL)
+    if ((inf = open(file, 0)) < 0)
     {
 	perror(file);
 	return FALSE;
@@ -145,12 +147,14 @@ char **envp;
 
     fflush(stdout);
     encread(buf, 80, inf);
-
     if (strcmp(buf, version) != 0)
     {
 	printf("Sorry, saved game is out of date.\n");
 	return FALSE;
     }
+
+    fstat(inf, &sbuf2);
+    fflush(stdout);
 
     encread(buf, 80, inf);
     sscanf(buf, "R%d %d\n", &rogue_version, &savefile_version);
@@ -164,12 +168,21 @@ char **envp;
     encread(buf,80,inf);
     sscanf(buf,"%d x %d\n",&slines, &scols);
 
-    /*
-     * we do not close the file so that we will have a hold of the
-     * inode for as long as possible
-     */
+    initscr();  
+    cw = newwin(LINES, COLS, 0, 0);
+    mw = newwin(LINES, COLS, 0, 0);
+    hw = newwin(LINES, COLS, 0, 0);
+    nocrmode();    
+    keypad(cw,1);
 
-    initscr();
+    savef = fdopen(inf,"r");
+
+    if (rs_restore_file(savef) != 0)
+    {
+	endwin();
+	printf("Cannot restore file\n");
+    	return(FALSE);
+    }
 	
     if (slines > LINES)
     {
@@ -186,29 +199,48 @@ char **envp;
 		printf("Current screen only has %d columns. Unable to restore game\n",COLS);
 		return(FALSE);
     }
-    
-    cw = newwin(LINES, COLS, 0, 0);
-    mw = newwin(LINES, COLS, 0, 0);
-    hw = newwin(LINES, COLS, 0, 0);
-    nocrmode();    
-    keypad(cw,1);
+
+    /*
+     * we do not close the file so that we will have a hold of the
+     * inode for as long as possible
+     */
+
+    if (!wizard)
+    {
+	if (sbuf2.st_ino != sbuf.st_ino || sbuf2.st_dev != sbuf.st_dev)
+	{
+	    endwin();
+	    printf("Sorry, saved game is not in the same file.\n");
+	    return FALSE;
+	}
+	else if (sbuf2.st_ctime - sbuf.st_ctime > 15)
+	{
+	    endwin();
+	    printf("Sorry, file has been touched.\n");
+	    return FALSE;
+	}
+    }
     mpos = 0;
-    mvwprintw(cw, 0, 0, "%s", file);
+    mvwprintw(cw, 0, 0, "%s: %s", file, ctime(&sbuf2.st_mtime));
 
-    if (rs_restore_file(inf) != 0)
+    /*
+     * defeat multiple restarting from the same place
+     */
+    if (!wizard)
     {
-	endwin();
-	printf("Cannot restore file\n");
-    	return(FALSE);
+	if (sbuf2.st_nlink != 1)
+	{
+	    endwin();
+	    printf("Cannot restore from a linked file\n");
+	    return FALSE;
+	}
+	else if (md_unlink_open_file(file, inf) < 0)
+	{
+	    endwin();
+	    printf("Cannot unlink file\n");
+	    return FALSE;
+	}
     }
-	
-    if (!wizard && (md_unlink_open_file(file, fileno(inf)) < 0))
-    {
-	endwin();
-	printf("Cannot unlink file\n");
-	return FALSE;
-    }
-
     environ = envp;
     strcpy(file_name, file);
     setup();
@@ -221,54 +253,25 @@ char **envp;
     return(0);
 }
 
-static int encerrno = 0;
-
-int
-encerror()
-{
-    return encerrno;
-}
-
-void
-encseterr(int err)
-{
-    encerrno = err;
-}
-
-int
-encclearerr()
-{
-    int n = encerrno;
-
-    encerrno = 0;
-
-    return(n);
-}
-
 /*
  * perform an encrypted write
  */
 int
 encwrite(start, size, outf)
-register void *start;
+register char *start;
 unsigned int size;
 register FILE *outf;
 {
     register char *ep;
-    register char *cstart = start;
-    unsigned int o_size = size;
+
     ep = encstr;
 
-    while (size)
+    while (size--)
     {
-	if (putc(*cstart++ ^ *ep++, outf) == EOF)
-	    return(o_size - size);
+	putc(*start++ ^ *ep++, outf);
 	if (*ep == '\0')
 	    ep = encstr;
-	size--;
     }
-
-    return(o_size - size);
 }
 
 /*
@@ -276,22 +279,21 @@ register FILE *outf;
  */
 int
 encread(start, size, inf)
-register void *start;
+register char *start;
 unsigned int size;
-register FILE *inf;
+register int inf;
 {
     register char *ep;
     register int read_size;
-    register char *cstart = start;
 
-    if ((read_size = fread(start, 1, size, inf)) == -1 || read_size == 0)
+    if ((read_size = read(inf, start, size)) == -1 || read_size == 0)
 	return read_size;
 
     ep = encstr;
 
     while (size--)
     {
-	*cstart++ ^= *ep++;
+	*start++ ^= *ep++;
 	if (*ep == '\0')
 	    ep = encstr;
     }

@@ -1,7 +1,7 @@
 /*
     state.c - Portable Rogue Save State Code
 
-    Copyright (C) 1999, 2000 Nicholas J. Kisseberth
+    Copyright (C) 1999, 2000, 2005, 2007, 2008 Nicholas J. Kisseberth
     All rights reserved.
 
     Permission to use, copy, modify, and/or distribute this software for any
@@ -20,14 +20,13 @@
 #include <string.h>
 #include <curses.h>
 #include <errno.h>
+#include <sys/stat.h>
+#include <ctype.h>
 #include "rogue.h"
 
 /************************************************************************/
 /* Save State Code                                                      */
 /************************************************************************/
-
-#define OBJPTR(what)    (struct object *)((*what).l_data)
-#define THINGPTR(what)  (struct thing *)((*what).l_data)
 
 #define RSID_STATS        0xABCD0001
 #define RSID_THING        0xABCD0002
@@ -53,15 +52,106 @@
 #define RSID_CTYPES       0XABCD0015
 #define RSID_COORDLIST    0XABCD0016
 #define RSID_ROOMS        0XABCD0017
+#define RSID_STAT         0xABCD0018
 
 #define READSTAT (format_error || read_error )
 #define WRITESTAT (write_error)
 
-static int read_error   = FALSE;
-static int write_error  = FALSE;
-static int format_error = FALSE;
 static int endian = 0x01020304;
 #define  big_endian ( *((char *)&endian) == 0x01 )
+
+void rs_write(FILE *savef, void *ptr, size_t size);
+void rs_read(FILE *savef, void *ptr, size_t size);
+void rs_write_int(FILE *savef, int c);
+void rs_read_int(FILE *savef, int *i);
+void rs_read_int_to_bool(FILE *savef, bool *i);
+void rs_write_uint(FILE *savef, unsigned int c);
+void rs_read_uint(FILE *savef, unsigned int *i);
+void rs_write_chars(FILE *savef, char *c, int cnt);
+void rs_read_chars(FILE *savef, char *i, int cnt);
+void rs_write_ints(FILE *savef, int *c, int cnt);
+void rs_read_ints(FILE *savef, int *i, int cnt);
+void rs_write_marker(FILE *savef, int id);
+void rs_read_marker(FILE *savef, int id);
+void rs_write_string(FILE *savef, char *s);
+void rs_read_string(FILE *savef, char *s, int max);
+void rs_read_new_string(FILE *savef, char **s);
+void rs_write_string_index(FILE *savef, char master[][15], int max, char *str);
+void rs_read_string_index(FILE *savef,  char master[][15], int maxindex, char **str);
+void rs_write_coord(FILE *savef, coord c);
+void rs_read_coord(FILE *savef, coord *c);
+void rs_write_str_t(FILE *savef, str_t str);
+void rs_read_str_t(FILE *savef, str_t *str);
+void rs_write_window(FILE *savef, WINDOW *win);
+void rs_read_window(FILE *savef, WINDOW *win);
+void *get_list_item(struct linked_list *l, int i);
+int find_list_ptr(struct linked_list *l, void *ptr);
+int list_size(struct linked_list *l);
+void rs_write_stats(FILE *savef, struct stats *s);
+void rs_read_stats(FILE *savef, struct stats *s);
+void rs_write_scrolls(FILE *savef);
+void rs_read_scrolls(FILE *savef);
+void rs_write_potions(FILE *savef);
+void rs_read_potions(FILE *savef);
+void rs_write_rings(FILE *savef);
+void rs_read_rings(FILE *savef);
+void rs_write_sticks(FILE *savef);
+void rs_read_sticks(FILE *savef);
+void rs_write_daemons(FILE *savef, struct delayed_action *dlist, int cnt);
+void rs_read_daemons(FILE *savef, struct delayed_action *dlist, int cnt);
+void rs_write_room(FILE *savef, struct room *r);
+void rs_read_room(FILE *savef, struct room *r);
+void rs_write_rooms(FILE *savef, struct room r[], int cnt);
+void rs_read_rooms(FILE *savef, struct room *r, int cnt);
+void rs_write_room_reference(FILE *savef, struct room *rp);
+void rs_read_room_reference(FILE *savef, struct room **rp);
+void rs_write_object(FILE *savef, struct object *o);
+void rs_read_object(FILE *savef, struct object *o);
+void rs_write_object_list(FILE *savef, struct linked_list *l);
+void rs_read_object_list(FILE *savef, struct linked_list **list);
+void rs_write_object_reference(FILE *savef, struct linked_list *list, struct object *item);
+void rs_read_object_reference(FILE *savef, struct linked_list *list, struct object **item);
+int find_room_coord(const struct room *rmlist, const coord *c, int n);
+int find_thing_coord(struct linked_list *monlist, coord *c);
+int find_object_coord(struct linked_list *objlist, coord *c);
+void rs_write_thing(FILE *savef, struct thing *t);
+void rs_read_thing(FILE *savef, struct thing *t);
+void rs_fix_thing(struct thing *t);
+void rs_write_thing_list(FILE *savef, struct linked_list *l);
+void rs_read_thing_list(FILE *savef, struct linked_list **list);
+void rs_fix_thing_list(struct linked_list *list);
+void rs_fix_magic_items(struct magic_item *mi, int cnt);
+void rs_fix_monsters(struct monster mons[26]);
+void rs_write_trap(FILE *savef, struct trap *trap);
+void rs_read_trap(FILE *savef, struct trap *trap);
+void rs_write_traps(FILE *savef, struct trap t[], int cnt);
+void rs_read_traps(FILE *savef, struct trap *t, int cnt);
+void rs_read_stat(FILE *savef, struct stat *sbuf);
+void rs_write_stat(FILE *saved, struct stat *sbuf);
+
+static int encerrno = 0;
+
+int
+encerror(void)
+{
+    return encerrno;
+}
+
+void
+encseterr(int err)
+{
+    encerrno = err;
+}
+
+int
+encclearerr(void)
+{
+    int n = encerrno;
+
+    encerrno = 0;
+
+    return(n);
+}
 
 void
 rs_write(FILE *savef, void *ptr, size_t size)
@@ -71,8 +161,8 @@ rs_write(FILE *savef, void *ptr, size_t size)
 
 void
 rs_read(FILE *savef, void *ptr, size_t size)
-    {   
-    encread(ptr, size, savef);
+{   
+    encread(ptr, size, fileno(savef));
 }
 
 void
@@ -115,6 +205,15 @@ rs_read_int(FILE *savef, int *i)
     }
     
     *i = *((int *) buf);
+}
+
+void
+rs_read_int_to_bool(FILE *savef, bool *b)
+{
+    int v = 0;
+
+    rs_read_int(savef, &v);
+    *b = (bool)v;
 }
 
 void
@@ -627,6 +726,7 @@ rs_read_potions(FILE *savef)
     {
         rs_read_string_index(savef, rainbow, cNCOLORS, &p_colors[i]);
         rs_read_boolean(savef,&p_know[i]);
+	rainbow[ p_know[i] ][0] = tolower( rainbow[ p_know[i] ][0] );
         rs_read_new_string(savef,&p_guess[i]);
     }
 }
@@ -653,6 +753,7 @@ rs_read_rings(FILE *savef)
     {
         rs_read_string_index(savef, stones, cNSTONES, &r_stones[i]);
         rs_read_boolean(savef,&r_know[i]);
+	r_stones[ r_know[i] ][0] = tolower( r_stones[ r_know[i] ][0] );
         rs_read_new_string(savef,&r_guess[i]);
     }
 }
@@ -691,15 +792,19 @@ rs_read_sticks(FILE *savef)
         if (list == 0)
         {
             rs_read_string_index(savef, wood, cNWOOD, &ws_made[i]);
+	    rs_read_boolean(savef, &ws_know[i]);
+	    wood[ ws_know[i] ][0] = tolower( wood[ ws_know[i] ][0] );
             ws_type[i] = "staff";
+	    rs_read_new_string(savef, &ws_guess[i]);
         }
         else 
         {
             rs_read_string_index(savef, metal, cNMETAL, &ws_made[i]);
+            rs_read_boolean(savef, &ws_know[i]);
+	    metal[ ws_know[i] ][0] = tolower( metal[ ws_know[i] ][0] );
             ws_type[i] = "wand";
+	    rs_read_new_string(savef, &ws_guess[i]);
         }
-        rs_read_boolean(savef, &ws_know[i]);
-        rs_read_new_string(savef, &ws_guess[i]);
     }
 }
 
@@ -1009,7 +1114,7 @@ find_thing_coord(struct linked_list *monlist, coord *c)
 
     for(mitem = monlist; mitem != NULL; mitem = mitem->l_next)
     {
-        tp = THINGPTR(mitem);
+        tp = (struct thing *)ldata(mitem);
 
         if (c == &tp->t_pos)
             return(i);
@@ -1029,7 +1134,7 @@ find_object_coord(struct linked_list *objlist, coord *c)
 
     for(oitem = objlist; oitem != NULL; oitem = oitem->l_next)
     {
-        obj = OBJPTR(oitem);
+        obj = (struct object *)ldata(oitem);
 
         if (c == &obj->o_pos)
             return(i);
@@ -1183,7 +1288,7 @@ rs_read_thing(FILE *savef, struct thing *t)
 
                 if (item != NULL)
                 {
-                    obj = OBJPTR(item);
+	    obj = (struct object *)ldata(item);
                     t->t_dest = &obj->o_pos;
                 }
             }
@@ -1212,7 +1317,7 @@ rs_fix_thing(struct thing *t)
 
     if (item != NULL)
     {
-        tp = THINGPTR(item);
+        tp = (struct thing *)ldata(item);
         t->t_dest = &tp->t_pos;
     }
 }
@@ -1278,7 +1383,7 @@ rs_fix_thing_list(struct linked_list *list)
     struct linked_list *item;
     
     for(item = list; item != NULL; item = item->l_next)
-        rs_fix_thing(THINGPTR(item));
+        rs_fix_thing((struct thing *)ldata(item));
 }
 
 void
@@ -1340,6 +1445,59 @@ rs_read_traps(FILE *savef, struct trap *t, int cnt)
     for(n = 0; n < value; n++)
         rs_read_trap(savef,&t[n]);
 }
+
+void
+rs_write_stat(FILE *savef, struct stat *sbuf)
+{
+	long long ino, ctime, dev;
+
+    rs_write_marker(savef, RSID_STAT);
+
+    ino = sbuf->st_ino;
+	ctime = sbuf->st_ctime;
+	dev = sbuf->st_dev;
+
+    rs_write_int(savef, ino);
+
+	if (sizeof(ino_t) > 4)
+	    rs_write_int(savef, ino >> 32);
+	else
+		rs_write_int(savef, 0);
+
+    rs_write_int(savef, ctime);
+
+	if (sizeof(time_t) > 4)
+	    rs_write_int(savef, ctime >> 32);
+	else
+		rs_write_int(savef, 0);
+
+    rs_write_int(savef, sbuf->st_dev);
+
+	if (sizeof(dev_t) > 4)
+	    rs_write_int(savef, dev >> 32);
+	else
+		rs_write_int(savef, 0);
+}
+
+void
+rs_read_stat(FILE *savef, struct stat *sbuf)
+{
+    int ino[2]={0,0},ctime[2]={0,0},dev[2]={0,0};
+
+    rs_read_marker(savef, RSID_STAT);
+    rs_read_int(savef, &ino[0]);
+    rs_read_int(savef, &ino[1]);
+    rs_read_int(savef, &ctime[0]);
+    rs_read_int(savef, &ctime[1]);
+    rs_read_int(savef, &dev[0]);
+    rs_read_int(savef, &dev[1]);
+
+	sbuf->st_ino = (long long) ino[1] << 32 | ino[0];
+	sbuf->st_ctime = (long long) ctime[1] << 32 | ctime[0];
+	sbuf->st_dev = (long long) dev[1] << 32 | dev[0];
+}
+
+extern struct stat sbuf;
 
 int
 rs_save_file(FILE *savef)
