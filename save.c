@@ -202,7 +202,7 @@ char **envp;
     	return(FALSE);
     }
 	
-    if (!wizard && (md_unlink_open_file(file, inf) < 0))
+    if (!wizard && (md_unlink_open_file(file, fileno(inf)) < 0))
     {
 	endwin();
 	printf("Cannot unlink file\n");
@@ -214,7 +214,7 @@ char **envp;
     setup();
     clearok(curscr, TRUE);
     touchwin(cw);
-    srand(md_getpid());
+    srand(getpid());
     status();
     playit();
     /*NOTREACHED*/

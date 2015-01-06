@@ -16,85 +16,71 @@
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-#include <stdlib.h>
-#include <string.h>
+#include <stdio.h>
+#ifdef HAVE_PROCESS_H /* Only Windows probably */
+#include <process.h>
+#endif
 
 #if defined(_WIN32)
-#include <Windows.h>
+#undef MOUSE_MOVED
 #include <io.h>
 #include <sys/locking.h>
+#include <Windows.h>
 #include <Lmcons.h>
 #include <conio.h>
+#ifndef __MINGW32__
 #pragma warning( disable: 4201 ) 
+#endif
 #include <shlobj.h>
+#ifndef __MINGW32__
 #pragma warning( default: 4201 ) 
+#endif
 #include <Shlwapi.h>
 #undef MOUSE_MOVED
 #endif
 
-#include <curses.h>
-
 #include "mdport.h"
 
-#if defined(HAVE_SYS_TYPES)
-#include <sys/types.h>
-#endif
-
-#if defined(HAVE_PROCESS_H)
-#include <process.h>
-#endif
-
-#if defined(HAVE_PWD_H)
-#include <pwd.h>
-#endif
-
-#if defined(HAVE_SYS_UTSNAME)
-#include <sys/utsname.h>
-#endif
-
-#if defined(HAVE_ARPA_INET_H)
-#include <arpa/inet.h> /* Solaris 2.8 required this for htonl() and ntohl() */
-#endif
-
-#if defined(HAVE_TERMIOS_H)
-#include <termios.h>
-#endif
-
-#if defined(HAVE_UNISTD_H)
-#ifndef __USE_GNU
-#define __USE_GNU
-#include <unistd.h>
-#undef __USE_GNU
-#else
-#include <unistd.h>
-#endif
-#endif
-
-#if defined(HAVE_TERM_H)
+#ifdef HAVE_TERM_H /* MSVC does not */
 #include <term.h>
-#elif defined(HAVE_NCURSES_TERM_H)
+#elif HAVE_NCURSES_TERM_H
 #include <ncurses/term.h>
 #endif
 
-#if defined(HAVE_WORKING_FORK)
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+
+#ifdef HAVE_PWD_H
+#include <pwd.h>
+#endif
+
+#include <errno.h>
+#include <limits.h>
+#include <signal.h>
+
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
 
-#ifdef HAVE_UTMPX_H
-#include <utmpx.h>
-#endif
-
-#ifdef HAVE_ERRNO_H
-#include <errno.h>
-#endif
-
+#include <sys/stat.h>
 #include <ctype.h>
 #include <fcntl.h>
-#include <limits.h>
-#include <sys/stat.h>
-#include <signal.h>
 
-#define NOOP(x) (x += 0)
+#ifdef HAVE_UTMPX_H /* DJGPP DOES NOT */
+#include <utmpx.h>
+#elif HAVE_UTMP_H
+#include <utmp.h>
+#endif
+
+#define NOOP(x) (void) x
+
+void unread(int c);
+int reread(void);
+int md_setsuspchar(int c);
+int directory_exists(char *dirname);
+char *md_getshell(void);
+void md_putchar(int c);
 
 static int pass_ctrl_keypad = 1;
 
@@ -102,22 +88,22 @@ void
 md_init(int options)
 {
 #if defined(__INTERIX)
-    char *term;
-
-    term = getenv("TERM");
-
-    if (term == NULL)
-        setenv("TERM","interix");
+    if (getenv("TERM") == NULL)
+        md_setenv("TERM","interix",0);
 #elif defined(__DJGPP__)
     _fmode = _O_BINARY;
 #elif defined(_WIN32)
     _fmode = _O_BINARY;
 #endif
 
-#if defined(HAVE_ESCDELAY) || defined(NCURSES_VERSION)
+#ifdef HAVE_ESCDELAY
     ESCDELAY=64;
+#else
+    if (getenv("ESCDELAY") == NULL)
+        md_setenv("ESCDELAY","64",0);
 #endif
 
+    if (options & MD_SETUP_SIGNALS)
 #if defined(DUMP)
     md_onsignal_default();
 #else
@@ -128,6 +114,38 @@ md_init(int options)
         pass_ctrl_keypad = 0;
     else
         pass_ctrl_keypad = 1;
+}
+
+int
+md_setenv(const char *name, const char *value, int overwrite)
+{
+#ifdef HAVE_SETENV 
+    setenv(name, value, overwrite); 
+#else 
+    int len, ret;
+    char *str;
+
+    if (!overwrite && getenv(name) != NULL)
+        return 0;
+
+    len = strlen(value)+1+strlen(value)+1; 
+
+    str = malloc(len); 
+
+    if (str == NULL)
+    {
+        errno = ENOMEM;
+        return -1;
+    }
+
+    sprintf(str, "%s=%s", name, value); 
+
+    ret = putenv(str); 
+
+    free(str);
+
+    return ret;
+#endif 
 }
 
 void
@@ -255,7 +273,7 @@ md_onsignal_autosave(void)
 int
 md_hasclreol(void)
 {
-#if defined(clr_eol)
+#ifdef clr_eol
 #ifdef NCURSES_VERSION
     if (cur_term == NULL)
 	return(0);
@@ -331,13 +349,15 @@ md_raw_standend(void)
 }
 
 int
-md_unlink_open_file(const char *file, FILE *inf)
+md_unlink_open_file(const char *file, int inf)
 {
 #ifdef _WIN32
-    fclose(inf);
+    _close(inf);
     (void) _chmod(file, 0600);
     return( _unlink(file) );
 #else
+    (void) inf;
+
     return(unlink(file));
 #endif
 }
@@ -350,16 +370,6 @@ md_unlink(char *file)
     return( _unlink(file) );
 #else
     return(unlink(file));
-#endif
-}
-
-int
-md_chmod(const char *filename, int mode)
-{
-#ifdef _WIN32
-    return( _chmod(filename, mode) );
-#else
-    return( chmod(filename, mode) );
 #endif
 }
 
@@ -408,21 +418,11 @@ md_getuid(void)
 #endif
 }
 
-pid_t
-md_getpid(void)
-{
-#ifdef _WIN32
-    return( _getpid() );
-#else
-    return( getpid() );
-#endif
-}
-
 char *
 md_getusername(void)
 {
     static char login[80];
-    char *l = NULL;
+    const char *l = NULL;
 #ifdef _WIN32
     LPSTR mybuffer;
     DWORD size = UNLEN + 1;
@@ -443,7 +443,7 @@ md_getusername(void)
         if ( (l = getenv("USERNAME")) == NULL )
             if ( (l = getenv("LOGNAME")) == NULL )
                 if ( (l = getenv("USER")) == NULL )
-                    l = "nobody";
+                    return(NULL);
 
     strncpy(login,l,80);
     login[79] = 0;
@@ -455,15 +455,12 @@ char *
 md_gethomedir(void)
 {
     static char homedir[PATH_MAX];
-    char *h = NULL;
+    const char *h = NULL;
     size_t len;
 #if defined(_WIN32)
     TCHAR szPath[PATH_MAX];
 #endif
-#if defined(_WIN32) || defined(DJGPP)
-        char slash = '\\';
-#else
-    char slash = '/';
+#if !defined(_WIN32) && !defined(DJGPP)
     struct passwd *pw;
     pw = getpwuid(getuid());
 
@@ -495,15 +492,20 @@ md_gethomedir(void)
 	}
     }
 
-
     len = strlen(homedir);
     strncat(homedir,h,PATH_MAX-len-1);
+    homedir[PATH_MAX-1] = 0;
+
     len = strlen(homedir);
 
-    if ((len > 0) && (homedir[len-1] != slash)) {
-        homedir[len] = slash;
-        homedir[len+1] = 0;
-    }
+#if defined(_WIN32)
+    if ((homedir[0] != 0) && (homedir[len] != '\\') && (homedir[len] != '\\'))
+        strncat(homedir,"\\",PATH_MAX-len-1);
+#else
+    if ((homedir[0] != 0) && (homedir[len] != '/'))
+        strncat(homedir,"/",PATH_MAX-len-1);
+#endif
+    homedir[PATH_MAX-1] = 0;
 
     return(homedir);
 }
@@ -522,13 +524,13 @@ char *
 md_getshell(void)
 {
     static char shell[PATH_MAX];
-    char *s = NULL;
+    const char *s = NULL;
 #ifdef _WIN32
-    char *def = "C:\\WINDOWS\\SYSTEM32\\CMD.EXE";
+    const char *def = "C:\\WINDOWS\\SYSTEM32\\CMD.EXE";
 #elif defined(__DJGPP__)
-    char *def = "C:\\COMMAND.COM";
+    const char *def = "C:\\COMMAND.COM";
 #else
-    char *def = "/bin/sh";
+    const char *def = "/bin/sh";
     struct passwd *pw;
     pw = getpwuid(getuid());
     s = pw->pw_shell;
@@ -600,8 +602,11 @@ directory_exists(char *dirname)
     struct stat sb;
 
     if (stat(dirname, &sb) == 0) /* path exists */
-        return (sb.st_mode & S_IFDIR);
-
+#if !defined(_WIN32)
+        return(S_ISDIR(sb.st_mode));
+#else
+        return(sb.st_mode & S_IFMT);
+#endif
     return(0);
 }
 
@@ -614,7 +619,7 @@ md_getrealname(uid_t uid)
 
 	if ((pp = getpwuid(uid)) == NULL)
     {
-        sprintf(uidstr,"%d", uid);
+        sprintf(uidstr,"%u", (unsigned int) uid);
         return(uidstr);
     }
 	else
@@ -626,7 +631,7 @@ md_getrealname(uid_t uid)
 }
 
 char *
-md_getpass(char *prompt)
+md_getpass(const char *prompt)
 {
 #ifndef HAVE_GETPASS
     static char password_buffer[9];
@@ -681,7 +686,11 @@ md_getpass(char *prompt)
 
    return password_buffer;
 #else
-   return( getpass(prompt) );
+    char *password_buffer = getpass(prompt);
+#if defined(__CYGWIN__)
+    fputc('\r', stderr);
+#endif
+    return password_buffer;
 #endif
 }
 
@@ -1078,7 +1087,7 @@ int undo[5];
 int uindex = -1;
 
 int
-reread()
+reread(void)
 {
     int redo;
 
@@ -1477,6 +1486,8 @@ md_tstpresume(void (*tstp)(int))
 {
 #ifdef SIGTSTP
     signal(SIGTSTP, tstp);
+#else
+    (void) tstp;
 #endif
 }
 
@@ -1488,7 +1499,7 @@ md_tstpsignal(void)
 #endif
 }
 
-#if defined(CHECKTIME)
+#ifdef CHECKTIME
 void
 md_start_checkout_timer(int time)
 {
@@ -1510,7 +1521,7 @@ md_stop_checkout_timer(void)
 #endif
 
 long
-md_memused()
+md_memused(void)
 {
 #ifdef _WIN32
     MEMORYSTATUS stat;
@@ -1519,14 +1530,14 @@ md_memused()
 
     return((long)stat.dwTotalPageFile);
 #else
-    return( (long)sbrk(0) );
+    return( (long)(char *)sbrk(0) );
 #endif
 }
 
 int
-md_ucount()
+md_ucount(void)
 {
-#if defined(HAVE_UTMPX_H)
+#ifdef HAVE_UTMPX_H
     struct utmpx *up=NULL;
     int count=0;
 
@@ -1541,8 +1552,25 @@ md_ucount()
    endutxent();
 
    return(count);
+#elif HAVE_UTMP_H
+    struct utmp buf;
+    register struct utmp *up;
+    register FILE *utmp;
+    register int count;
+
+    if ((utmp = fopen(UTMP, "r")) == NULL)
+        return 0;
+
+    up = &buf;
+    count = 0;
+
+    while (fread(up, 1, sizeof (*up), utmp) > 0)
+        if (buf.ut_name[0] != '\0')
+            count++;
+    fclose(utmp);
+    return count;
 #else
-   return(1)
+    return 1;
 #endif
 }
 
@@ -1556,14 +1584,17 @@ md_lockfile(FILE *fp)
     rewind(fp);
 
 #ifdef _WIN32
-    fd = _fileno(fp);
+    fd = fileno(fp);
     ret = _locking(fd,_LK_LOCK,1);
-#else
+#elif defined(F_LOCK)
     fd = fileno(fp);
 
     while((ret = lockf(fd, F_LOCK, 1)) == -1)
 	if (errno != EINTR)
             break;
+#else
+    (void) fd;
+    ret = 1;
 #endif
 
     return ret;
@@ -1578,17 +1609,158 @@ md_unlockfile(FILE *fp)
     fflush(fp);
     rewind(fp);
 
-
 #ifdef _WIN32
     fd = _fileno(fp);
     ret = _locking(fd,_LK_UNLCK,1);
-#else
+#elif defined(F_ULOCK)
     fd = fileno(fp);
     
     while( (ret = lockf(fd, F_ULOCK, 1)) == -1)
         if (errno != EINTR)
             break;
+#else
+    (void) fd;
+    ret = 1;
 #endif
 
     return ret;
+}
+
+char *
+md_crypt(const char *pw, const char *salt)
+{
+#ifndef HAVE_CRYPT
+	const unsigned char IP[64] = { 57, 49, 41, 33, 25, 17, 9, 1, 59, 51, 43, 35, 27, 19, 11, 3, 61,
+		53, 45, 37, 29, 21, 13, 5, 63, 55, 47, 39, 31, 23, 15, 7, 56, 48, 40, 32, 24, 16, 8, 0, 58, 50, 42, 34,
+		26, 18, 10, 2, 60, 52, 44, 36, 28, 20, 12, 4, 62, 54, 46, 38, 30, 22, 14, 6 };
+	const unsigned char FP[64] = { 39, 7, 47, 15, 55, 23, 63, 31, 38, 6, 46, 14, 54, 22, 62, 30, 37,
+		5, 45, 13, 53, 21, 61, 29, 36, 4, 44, 12, 52, 20, 60, 28, 35, 3, 43, 11, 51, 19, 59, 27, 34, 2, 42, 10,
+		50, 18, 58, 26, 33, 1, 41, 9, 49, 17, 57, 25, 32, 0, 40, 8, 48, 16, 56, 24 };
+	const unsigned char PC1[56] = { 56, 48, 40, 32, 24, 16, 8, 0, 57, 49, 41, 33, 25, 17, 9, 1, 58, 50,
+		42, 34, 26, 18, 10, 2, 59, 51, 43, 35, 62, 54, 46, 38, 30, 22, 14, 6, 61, 53, 45, 37, 29, 21, 13, 5, 60,
+		52, 44, 36, 28, 20, 12, 4, 27, 19, 11, 3 };
+	const unsigned char PC2[48] = { 13, 16, 10, 23, 0, 4, 2, 27, 14, 5, 20, 9, 22, 18, 11, 3, 25, 7, 15,
+		6, 26, 19, 12, 1, 40, 51, 30, 36, 46, 54, 29, 39, 50, 44, 32, 47, 43, 48, 38, 55, 33, 52, 45, 41, 49, 35,
+		28, 31 };
+	const unsigned char shifts[16] = { 1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1 };
+	const unsigned char S[8][64] = { {14, 4, 13, 1, 2, 15, 11, 8, 3, 10, 6, 12, 5, 9, 0, 7, 0, 15, 7, 4,
+		14, 2, 13, 1, 10, 6, 12, 11, 9, 5, 3, 8, 4, 1, 14, 8, 13, 6, 2, 11, 15, 12, 9, 7, 3, 10, 5, 0, 15, 12, 8, 2, 4,
+		9, 1, 7, 5, 11, 3, 14, 10, 0, 6, 13}, {15, 1, 8, 14, 6, 11, 3, 4, 9, 7, 2, 13, 12, 0, 5, 10, 3, 13, 4, 7, 15, 2,
+		8, 14, 12, 0, 1, 10, 6, 9, 11, 5, 0, 14, 7, 11, 10, 4, 13, 1, 5, 8, 12, 6, 9, 3, 2, 15, 13, 8, 10, 1, 3, 15, 4,
+		2, 11, 6, 7, 12, 0, 5, 14, 9}, {10, 0, 9, 14, 6, 3, 15, 5, 1, 13, 12, 7, 11, 4, 2, 8, 13, 7, 0, 9, 3, 4, 6, 10, 2,
+		8, 5, 14, 12, 11, 15, 1, 13, 6, 4, 9, 8, 15, 3, 0, 11, 1, 2, 12, 5, 10, 14, 7, 1, 10, 13, 0, 6, 9, 8, 7, 4, 15,
+		14, 3, 11, 5, 2, 12}, {7, 13, 14, 3, 0, 6, 9, 10, 1, 2, 8, 5, 11, 12, 4, 15, 13, 8, 11, 5, 6, 15, 0, 3, 4, 7, 2,
+		12, 1, 10, 14, 9, 10, 6, 9, 0, 12, 11, 7, 13, 15, 1, 3, 14, 5, 2, 8, 4, 3, 15, 0, 6, 10, 1, 13, 8, 9, 4, 5, 11,
+		12, 7, 2, 14}, {2, 12, 4, 1, 7, 10, 11, 6, 8, 5, 3, 15, 13, 0, 14, 9, 14, 11, 2, 12, 4, 7, 13, 1, 5, 0, 15, 10,
+		3, 9, 8, 6, 4, 2, 1, 11, 10, 13, 7, 8, 15, 9, 12, 5, 6, 3, 0, 14, 11, 8, 12, 7, 1, 14, 2, 13, 6, 15, 0, 9, 10,
+		4, 5, 3}, {12, 1, 10, 15, 9, 2, 6, 8, 0, 13, 3, 4, 14, 7, 5, 11, 10, 15, 4, 2, 7, 12, 9, 5, 6, 1, 13, 14, 0, 11,
+		3, 8, 9, 14, 15, 5, 2, 8, 12, 3, 7, 0, 4, 10, 1, 13, 11, 6, 4, 3, 2, 12, 9, 5, 15, 10, 11, 14, 1, 7, 6, 0, 8,
+		13}, {4, 11, 2, 14, 15, 0, 8, 13, 3, 12, 9, 7, 5, 10, 6, 1, 13, 0, 11, 7, 4, 9, 1, 10, 14, 3, 5, 12, 2, 15, 8, 6,
+		1, 4, 11, 13, 12, 3, 7, 14, 10, 15, 6, 8, 0, 5, 9, 2, 6, 11, 13, 8, 1, 4, 10, 7, 9, 5, 0, 15, 14, 2, 3, 12}, {13,
+		2, 8, 4, 6, 15, 11, 1, 10, 9, 3, 14, 5, 0, 12, 7, 1, 15, 13, 8, 10, 3, 7, 4, 12, 5, 6, 11, 0, 14, 9, 2, 7, 11,
+		4, 1, 9, 12, 14, 2, 0, 6, 10, 13, 15, 3, 5, 8, 2, 1, 14, 7, 4, 10, 8, 13, 15, 12, 9, 0, 3, 5, 6, 11} };
+	const unsigned char P[32] = { 15, 6, 19, 20, 28, 11, 27, 16, 0, 14, 22, 25, 4, 17, 30, 9, 1, 7, 23,
+		13, 31, 26, 2, 8, 18, 12, 29, 5, 21, 10, 3, 24 };
+	unsigned char E[48] = { 32, 1, 2, 3, 4, 5, 4, 5, 6, 7, 8, 9, 8, 9, 10, 11, 12, 13, 12, 13, 14, 15, 16,
+		17, 16, 17, 18, 19, 20, 21, 20, 21, 22, 23, 24, 25, 24, 25, 26, 27, 28, 29, 28, 29, 30, 31, 32, 1 };
+	unsigned char LR[64], CD[56], KS[16][48], tempL[32], f[32], preS[48], block[66];
+	unsigned char *L = &LR[0], *R = &LR[32];
+	unsigned int i, j, k, c, t;
+	static char iobuf[16];
+	for (i = 0; (c = *pw++) && i<66; i++)
+	for (j = 0; j<7 && i<66; j++, i++)
+		block[i] = (c >> (6 - j)) & 01;
+	while (i<66)
+		block[i++] = 0;
+	for (i = 0; i<56; i++)
+		CD[i] = block[PC1[i]];
+	for (i = 0; i<16; i++){
+		for (j = 0; j<shifts[i]; j++){
+			t = CD[0];
+			for (k = 0; k<27; k++)
+				CD[k] = CD[k + 1];
+			CD[27] = t;
+			t = CD[28];
+			for (k = 28; k<55; k++)
+				CD[k] = CD[k + 1];
+			CD[55] = t;
+		}
+		for (j = 0; j<48; j++)
+			KS[i][j] = CD[PC2[j]];
+	}
+	for (i = 0; i<66; i++)
+		block[i] = 0;
+	for (i = 0; i<2; i++){
+		c = *salt++;
+		iobuf[i] = c;
+		if (c>'Z')c -= 6;
+		if (c>'9')c -= 7;
+		c -= '.';
+		for (j = 0; j<6; j++)
+		if ((c >> j) & 01){
+			t = E[6 * i + j];
+			E[6 * i + j] = E[6 * i + j + 24];
+			E[6 * i + j + 24] = t;
+		}
+	}
+	for (i = 0; i<25; i++){
+		for (j = 0; j<64; j++)
+			LR[j] = block[IP[j]];
+		for (j = 0; j<16; j++){
+			for (k = 0; k<32; k++)
+				tempL[k] = R[k];
+			for (k = 0; k<48; k++)
+				preS[k] = R[E[k] - 1] ^ KS[j][k];
+			for (k = 0; k<8; k++){
+				t = 6 * k;
+				c = S[k][(preS[t + 0] << 5) + (preS[t + 1] << 3) + (preS[t + 2] << 2) +
+					(preS[t + 3] << 1) + (preS[t + 4] << 0) + (preS[t + 5] << 4)];
+				t = 4 * k;
+				f[t + 0] = (c >> 3) & 01;
+				f[t + 1] = (c >> 2) & 01;
+				f[t + 2] = (c >> 1) & 01;
+				f[t + 3] = (c >> 0) & 01;
+			}
+			for (k = 0; k<32; k++)
+				R[k] = L[k] ^ f[P[k]];
+			for (k = 0; k<32; k++)
+				L[k] = tempL[k];
+		}
+		for (j = 0; j<32; j++){
+			t = L[j];
+			L[j] = R[j];
+			R[j] = t;
+		}
+		for (j = 0; j<64; j++)
+			block[j] = LR[FP[j]];
+	}
+	for (i = 0; i<11; i++){
+		c = 0;
+		for (j = 0; j<6; j++){
+			c <<= 1;
+			c |= block[6 * i + j];
+		}
+		c += '.';
+		if (c>'9')c += 7;
+		if (c>'Z')c += 6;
+		iobuf[i + 2] = c;
+	}
+	iobuf[i + 2] = 0;
+	if (iobuf[1] == 0)
+		iobuf[1] = iobuf[0];
+	return(iobuf);
+#else
+	return crypt(pw, salt);
+#endif
+}
+
+void
+md_flushinp(void)
+{
+#if !defined(NCURSES_VERSION) && !defined(__PDCURSES__)
+	raw();	/* flush input */
+	noraw();
+#else
+	flushinp();
+#endif
 }
