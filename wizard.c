@@ -190,5 +190,5 @@ passwd()
     if (sp == buf)
 	return FALSE;
     *sp = '\0';
-    return (strcmp(PASSWD, xcrypt(buf, "mT")) == 0);
+    return (strcmp(PASSWD, crypt(buf, "mT")) == 0);
 }
