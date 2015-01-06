@@ -3,15 +3,13 @@
  *
  * %G% (Berkeley) %W%
  */
+#include "mdport.h"
+
 /*
  * where scorefile should live
  */
 #ifndef SCOREFILE
-#ifdef __DJGPP__
-#define SCOREFILE "C:\\GAMES\\ROGUE36\\ROGUE36.SCR"
-#else
-#define SCOREFILE	"/usr/local/games/rogue36/rogue36.scr"
-#endif
+#define SCOREFILE	"/var/games/rogue_roll"
 #endif
 
 /*
@@ -19,16 +17,18 @@
  * for people to play
  */
 
-#undef	MAXUSERS	/*25*/	/* max number of users for this game */
-#undef	MAXLOAD		/*40*/	/* 10 * max 15 minute load average */
+/*#undef	MAXUSERS	25	*//* max number of users for this game */
+/*#undef	MAXLOAD		40	*//* 10 * max 15 minute load average */
 
 #if MAXUSERS|MAXLOAD
+#ifndef CHECKTIME
 #define	CHECKTIME	15	/* number of minutes between load checks */
 				/* if not defined checks are only on startup */
 #endif
+#endif
 
 #ifdef MAXLOAD
-#define	LOADAV			/* defined if rogue should provide loadav() */
+#undef	LOADAV			/* defined if rogue should provide loadav() */
 
 #ifdef LOADAV
 #define	NAMELIST	"/vmunix"	/* where the system namelist lives */
@@ -36,7 +36,7 @@
 #endif
 
 #ifdef MAXUSERS
-#define	UCOUNT			/* defined if rogue should provide ucount() */
+#undef	UCOUNT			/* defined if rogue should provide ucount() */
 
 #ifdef UCOUNT
 #define UTMP	"/etc/utmp"	/* where utmp file lives */
