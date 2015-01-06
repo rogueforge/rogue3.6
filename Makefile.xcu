@@ -1,0 +1,156 @@
+DISTNAME=rogue-3.6.5
+GROFF=groff
+CC=gcc
+LDFLAGS=
+RM=rm -f
+LIBS=-lcrypt -lcurses
+PACKAGE_NAME=rogue
+PACKAGE_VERSION=3.6.5
+PACKAGE_TARNAME=rogue
+CPPFLAGS=
+#DEFS -DPASSWD=mtXYZZY -DDUMP -DMAXUSER=25 -DMAXLOAD=40 -DSCOREFILE=/var/games/rogue.scr -DCHECKTIME=15
+DEFS=
+OBJEXT=o
+EXEEXT=.exe
+TAR=tar
+ZIP=zip
+GZIP=gzip
+STRIP=strip
+CP=cp
+PDFROFF=pdfroff
+DEFS=
+CFLAGS=-O
+DIST_TARGETS=@DIST_TARGETS@
+PLATFORM=xpg
+COMPRESS=compress
+#bindir
+#localstatedir
+#docdir
+#man6dir
+
+
+HDRS=rogue.h mach_dep.h mdport.h config-xsh.h
+
+CFILES=vers.c armor.c chase.c command.c daemon.c daemons.c fight.c\
+       init.c io.c list.c main.c mdport.c misc.c monsters.c move.c new_level.c\
+       options.c pack.c passages.c potions.c rings.c rip.c rooms.c\
+       save.c scrolls.c state.c sticks.c things.c weapons.c wizard.c
+
+MISC=aclocal.m4 compile config.guess config.h.in config.sub\
+     configure.ac depcomp install-sh LICENSE.TXT Makefile.am\
+     Makefile.in Makefile.xpg missing rogue.sln rogue.vcxproj TODO\
+     rogue.6 rogue.r
+
+OBJS=vers.$(OBJEXT) armor.$(OBJEXT) chase.$(OBJEXT) command.$(OBJEXT)\
+     daemon.$(OBJEXT) daemons.$(OBJEXT) fight.$(OBJEXT) init.$(OBJEXT)\
+     io.$(OBJEXT) list.$(OBJEXT) main.$(OBJEXT) mdport.$(OBJEXT)\
+     misc.$(OBJEXT) monsters.$(OBJEXT) move.$(OBJEXT) new_level.$(OBJEXT)\
+     options.$(OBJEXT) pack.$(OBJEXT) passages.$(OBJEXT) potions.$(OBJEXT)\
+     rings.$(OBJEXT) rip.$(OBJEXT) rooms.$(OBJEXT) save.$(OBJEXT)\
+     scrolls.$(OBJEXT) state.$(OBJEXT) sticks.$(OBJEXT) things.$(OBJEXT)\
+     weapons.$(OBJEXT) wizard.$(OBJEXT)
+
+ALL=$(PACKAGE_NAME)$(EXEEXT) LICENSE.TXT rogue.doc rogue.cat rogue.pdf\
+     rogue.txt rogue.ps rogue.6 rogue.r
+
+.PHONY: install-strip install uninstall distclean check installcheck\
+	maintainer-clean clean all
+
+all: $(ALL)
+
+.c.o: rogue.h mdport.h config.h
+	$(CC) $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+
+$(PACKAGE_NAME)$(EXEEXT): $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(LIBS) -o $@
+
+main.$(OBJEXT) rip.$(OBJEXT): mach_dep.h
+
+rogue.doc: rogue.r
+	$(GROFF) -P-c -t -ms -Tutf8 rogue.r > rogue.doc
+
+rogue.txt: rogue.r
+	$(GROFF) -P-c -t -ms -Tascii rogue.r > rogue.txt
+
+rogue.pdf: rogue.r
+	$(PDFROFF) --no-toc -t -ms rogue.r > rogue.pdf
+
+rogue.ps: rogue.r
+	$(GROFF) -t -ms -Tps rogue.r > rogue.ps
+
+rogue.cat: rogue.6
+	$(GROFF) -P-c -man -Tascii rogue.6 > rogue.cat
+
+$(DISTNAME).tar: $(ALL)
+	$(TAR) cf $@ $(ALL) 
+
+$(DISTNAME).tar.gz: $(DISTNAME).tar
+	$(GZIP) $< -c > $@
+
+$(DISTNAME).tar.Z: $(DISTNAME).tar
+	$(COMPRESS) $< -c > $@
+
+$(DISTNAME).tgz: $(DISTNAME).tar.gz
+	$(CP) $< $@
+
+$(DISTNAME).zip: $(ALL)
+	$(ZIP) $@ $(ALL)
+
+$(DISTNAME)-$(PLATFORM).tar: $(ALL)
+	$(TAR) cf $@ $(ALL) 
+
+$(DISTNAME)-$(PLATFORM).tar.gz: $(DISTNAME)-$(PLATFORM).tar
+	$(GZIP) $< -c > $@
+
+$(DISTNAME)-$(PLATFORM).zip: $(ALL)
+	$(ZIP) $@ $(ALL)
+
+install: $(PACKAGE_NAME)$(EXEEXT)
+	$(CP) $(PACKAGE_NAME)$(EXEEXT) $(DESTDIR)/usr/games/rogue
+	-$(TOUCH) test
+	-if test ! -f $(DESTDIR)$(SCOREFILE) ; then $(INSTALL) -m 0664 test $(DESTDIR)$(SCOREFILE) ; fi
+	-$(INSTALL) -m 0755 $(PROGRAM) $(DESTDIR)$(bindir)/$(PROGRAM)
+	-if test "x$(GROUPOWNER)" != "x" ; then \
+	    $(CHGRP) $(GROUPOWNER) $(DESTDIR)$(SCOREFILE) ; \
+	    $(CHGRP) $(GROUPOWNER) $(DESTDIR)$(bindir)/$(PROGRAM) ; \
+	    $(CHMOD) 02755 $(DESTDIR)$(bindir)/$(PROGRAM) ; \
+	    $(CHMOD) 0464 $(DESTDIR)$(SCOREFILE) ; \
+	 fi
+	-if test -d $(man6dir) ; then $(INSTALL) -m 0644 rogue.6 $(DESTDIR)$(man6dir)/$(PROGRAM).6 ; fi
+	-if test ! -d $(man6dir) ; then $(INSTALL) -m 0644 rogue.6 $(DESTDIR)$(mandir)/$(PROGRAM).6 ; fi
+	-$(INSTALL) -m 0644 rogue.doc $(DESTDIR)$(docdir)/$(PROGRAM).doc
+	-$(INSTALL) -m 0644 rogue.cat $(DESTDIR)$(docdir)/$(PROGRAM).cat
+	-$(INSTALL) -m 0644 LICENSE.TXT $(DESTDIR)$(docdir)/LICENSE.TXT
+	-$(INSTALL) -m 0644 rogue.me $(DESTDIR)$(docdir)/$(PROGRAM).me
+	-if test ! -f $(DESTDIR)$(LOCKFILE)  ; then $(INSTALL) -m 0666 test $(DESTDIR)$(LOCKFILE)  ; $(RM) $(DESTDIR)$(LOCKFILE) ; fi
+	-$(RM) test
+
+clean:
+	$(RM) $(OBJS) $(PACKAGE_NAME)$(EXEEXT)
+	$(RM) $(DISTNAME).zip $(DISTNAME).tar $(DISTNAME).tar.gz $(DISTNAME).tar.Z
+	$(RM) $(DISTNAME)-$(PLATFORM).zip $(DISTNAME)-$(PLATFORM).tar \
+	      $(DISTNAME)-$(PLATFORM).tar.gz $(DISTNAME)-$(PLATFORM).tar.Z
+
+dist: $(DIST_TARGETS)
+
+installcheck:
+	$(TRUE)
+
+check:
+	$(TRUE)
+
+distclean: clean
+	$(RM) config.log stamp-h1 config.h Makefile config.status
+	$(RM) config.h.in~ config.cache configure.lineno config.status.lineno
+	$(RM) -r autom4te.cache .deps
+
+maintainer-clean: distclean
+	$(RM) configure
+	$(RM) rogue.doc rogue.txt rogue.pdf rogue.ps rogue.cat 
+
+uninstall:
+	$(TRUE)
+
+install-strip: install
+	$(STRIP) $(DESTDIR)/usr/games/rogue
+
