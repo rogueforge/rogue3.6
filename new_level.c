@@ -18,6 +18,14 @@ new_level()
 
     if (level > max_level)
 	max_level = level;
+
+    if (on(player, ISHELD))
+    {
+	player.t_flags &= ~ISHELD;
+	fung_hit = 0;
+	strcpy(monsters['F'-'A'].m_stats.s_dmg, "000d0");
+    }
+
     wclear(cw);
     wclear(mw);
     clear();
