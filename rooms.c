@@ -115,12 +115,13 @@ register struct room *rp;
 {
     register int j, k;
 
-    move(rp->r_pos.y, rp->r_pos.x+1);
+    move(rp->r_pos.y, rp->r_pos.x);
     vert(rp->r_max.y-2);				/* Draw left side */
     move(rp->r_pos.y+rp->r_max.y-1, rp->r_pos.x);
     horiz(rp->r_max.x);					/* Draw bottom */
     move(rp->r_pos.y, rp->r_pos.x);
     horiz(rp->r_max.x);					/* Draw top */
+    move(rp->r_pos.y, rp->r_pos.x+rp->r_max.x-1);
     vert(rp->r_max.y-2);				/* Draw right side */
     /*
      * Put the floor down
@@ -163,7 +164,6 @@ register int cnt;
     register int x, y;
 
     getyx(stdscr, y, x);
-    x--;
     while (cnt--) {
 	move(++y, x);
 	addch('|');
