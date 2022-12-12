@@ -232,4 +232,11 @@ genocide()
 	    wand_mons[i] = ' ';
 	    break;
 	}
+
+    if (c == 'F')
+    {
+	player.t_flags &= ~ISHELD;
+	fung_hit = 0;
+	strcpy(monsters['F'-'A'].m_stats.s_dmg, "000d0");
+    }
 }
