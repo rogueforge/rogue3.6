@@ -632,7 +632,7 @@ call()
     else
 	msg("What do you want to call it? ");
     if (guess[obj->o_which] != NULL)
-	cfree(guess[obj->o_which]);
+	free(guess[obj->o_which]);
     strcpy(prbuf, elsewise);
     if (get_str(prbuf, cw) == NORM)
     {
