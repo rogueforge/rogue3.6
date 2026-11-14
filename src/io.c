@@ -127,15 +127,15 @@ step_ok(ch)
 readchar()
 {
     char c;
+    register int cnt = 0;
 
     fflush(stdout);
     keep_scr();
-    while (read(0, &c, 1) < 0)
+    for (errno = 0; read(0, &c, 1) <= 0; errno = 0)
 	if (errno == EINTR)
-	{
-	    errno = 0;
 	    keep_scr();
-	}
+	else if (cnt++ > 100)	/* if we are getting infinite EOFs */
+	    auto_save();	/* save the game */
     return c;
 }
 
