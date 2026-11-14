@@ -272,6 +272,8 @@ bool gotdir;
 		switch (ch)
 		{
 		    case DOOR:
+			if (ce(pos, hero))
+			    goto def;
 		    case SECRETDOOR:
 		    case '|':
 		    case '-':
@@ -283,6 +285,7 @@ bool gotdir;
 			msg("The bolt bounces");
 			break;
 		    default:
+def:
 			if (!bounced && isupper(ch))
 			{
 			    if (!save_throw(VS_MAGIC, ldata(find_mons(unc(pos)))))
