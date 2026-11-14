@@ -244,12 +244,21 @@ FILE *outf;
 int changed;
 {
     struct rlimit lim;
+    sigset_t set, oset;
 
     if (changed
 	&& !(getrlimit(RLIMIT_FSIZE, &lim) == 0 && lim.rlim_cur < size))
     {
+	sigemptyset(&set);
+	sigaddset(&set, SIGINT);
+	sigaddset(&set, SIGHUP);
+	sigaddset(&set, SIGTERM);
+	sigaddset(&set, SIGQUIT);
+	sigprocmask(SIG_BLOCK, &set, &oset);
 	fseek(outf, 0L, 0);
 	encwrite(table, size, outf);
+	fflush(outf);
+	sigprocmask(SIG_SETMASK, &oset, (sigset_t *) NULL);
     }
     fclose(outf);
 }
