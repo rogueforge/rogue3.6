@@ -181,6 +181,10 @@ char monst;
     for (scp = top_ten; scp < &top_ten[10]; scp++) {
 	if (scp->sc_score
 	    && scp->sc_flags >= 0 && scp->sc_flags <= 2) {
+	    scp->sc_name[79] = '\0';
+	    for (i = 0; scp->sc_name[i] != '\0'; i++)
+		if (scp->sc_name[i] < ' ' || scp->sc_name[i] > '~')
+		    scp->sc_name[i] = '?';
 	    printf("%d\t%d\t%s: %s on level %d", (int) (scp - top_ten) + 1,
 		scp->sc_score, scp->sc_name, reason[scp->sc_flags],
 		scp->sc_level);
