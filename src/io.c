@@ -59,14 +59,30 @@ addmsg(char *fmt, ...)
  */
 endmsg()
 {
-    strcpy(huh, msgbuf);
+    register char *sp, *cp;
+
+    cp = huh;
+    for (sp = msgbuf; *sp != '\0' && cp < &huh[sizeof huh - 8]; sp++)
+	if (*sp == '\t')
+	    do
+		*cp++ = ' ';
+	    while ((cp - huh) % 8 != 0);
+	else if (*sp < ' ' || *sp > '~')
+	    *cp++ = '?';
+	else
+	    *cp++ = *sp;
+    *cp = '\0';
+    strcpy(msgbuf, huh);
+    newpos = strlen(msgbuf);
     if (mpos)
     {
-	wmove(cw, 0, mpos);
+	wmove(cw, 0, mpos > COLS - 8 ? COLS - 8 : mpos);
 	waddstr(cw, "--More--");
 	draw(cw);
 	wait_for(' ');
     }
+    if (newpos > COLS - 1)
+	msgbuf[newpos = COLS - 1] = '\0';
     mvwaddstr(cw, 0, 0, msgbuf);
     wclrtoeol(cw);
     mpos = newpos;

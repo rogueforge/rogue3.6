@@ -254,7 +254,10 @@ char **envp;
     kw = NULL;
     save_wins(TRUE);
     mpos = 0;
-    mvwprintw(cw, 0, 0, "%s: %s", file, ctime(&sbuf2.st_mtime));
+    for (x = 0; x < COLS - 28 && x < sizeof buf - 1 && file[x] != '\0'; x++)
+	buf[x] = file[x] < ' ' || file[x] > '~' ? '?' : file[x];
+    buf[x] = '\0';
+    mvwprintw(cw, 0, 0, "%s: %s", buf, ctime(&sbuf2.st_mtime));
 
     /*
      * defeat multiple restarting from the same place
