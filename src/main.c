@@ -303,6 +303,9 @@ setup()
 #ifndef DUMP
     signal(SIGQUIT, endit);
 #endif
+#ifdef SIGXFSZ
+    signal(SIGXFSZ, SIG_IGN);
+#endif
 #ifdef SIGTSTP
     signal(SIGTSTP, tstp);
 #endif
