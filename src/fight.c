@@ -222,6 +222,7 @@ register struct thing *mp;
 		    {
 			obj = (struct object *) ldata(list);
 			if (obj != cur_armor && obj != cur_weapon &&
+			    obj != cur_ring[LEFT] && obj != cur_ring[RIGHT] &&
 			    is_magic(obj) && rnd(++nobj) == 0)
 				steal = list;
 		    }
