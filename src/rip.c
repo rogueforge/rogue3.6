@@ -119,6 +119,7 @@ char monst;
 	scp->sc_uid = RN;
     }
 
+    file_name[0] = '\0';
     signal(SIGINT, SIG_DFL);
 #ifdef SIGWINCH
     signal(SIGWINCH, SIG_IGN);
@@ -223,6 +224,7 @@ total_winner()
     register char c;
     register int oldpurse;
 
+    file_name[0] = '\0';
     clear();
     standout();
     addstr("                                                               \n");
