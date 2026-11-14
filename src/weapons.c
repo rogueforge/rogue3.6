@@ -171,7 +171,8 @@ bool pr;
 	return;
     }
     if (pr)
-	msg("Your %s vanishes as it hits the ground.", w_names[obj->o_which]);
+	msg("Your %s vanishes as it hits the ground.",
+	    obj->o_type == WEAPON ? w_names[obj->o_which] : "object");
     discard(item);
 }
 
