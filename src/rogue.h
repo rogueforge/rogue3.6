@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 #include <time.h>
+#include <unistd.h>
 
 /*
  * Maximum number of different things
@@ -482,7 +483,7 @@ struct linked_list *find_mons(), *find_obj(), *get_item(), *new_item();
 struct linked_list *new_thing(), *wake_monster();
 
 char *malloc(), *getenv(), *unctrl(), *tr_name(), *new();
-char *vowelstr(), *inv_name(), *strcpy(), *strcat(), *sbrk(), *brk();
+char *vowelstr(), *inv_name(), *strcpy(), *strcat();
 char *ctime(), *num(), *ring_num();
 
 struct room *roomin();
@@ -498,6 +499,5 @@ int quit(), tstp(), unconfuse(), unsee(), rollwand(), stomach(), sight();
 int checkout();
 #endif
 
-long lseek();
 
 struct trap *trap_at();
