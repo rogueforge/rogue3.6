@@ -51,7 +51,9 @@ char **envp;
      * Check to see if he is a wizard
      */
     if (argc >= 2 && argv[1][0] == '\0')
-	if (strcmp(PASSWD, crypt(getpass("Wizard's password: "), "mT")) == 0)
+	if ((env = getpass("Wizard's password: ")) != NULL
+	    && (env = crypt(env, "mT")) != NULL
+	    && strcmp(PASSWD, env) == 0)
 	{
 	    wizard = TRUE;
 	    argv++;

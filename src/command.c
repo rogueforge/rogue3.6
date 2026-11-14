@@ -223,7 +223,8 @@ command()
 			{
 			    register struct linked_list *item;
 
-			    if ((item = get_item("charge", STICK)) != NULL)
+			    if ((item = get_item("charge", STICK)) != NULL
+				&& ((struct object *) ldata(item))->o_type == STICK)
 				((struct object *) ldata(item))->o_charges = 10000;
 			}
 			when CTRL('H') :

@@ -81,6 +81,23 @@ create_obj()
     obj->o_group = 0;
     obj->o_count = 1;
     mpos = 0;
+    switch (obj->o_type)
+    {
+	when POTION: bless = MAXPOTIONS;
+	when SCROLL: bless = MAXSCROLLS;
+	when RING: bless = MAXRINGS;
+	when STICK: bless = MAXSTICKS;
+	when WEAPON: bless = MAXWEAPONS;
+	when ARMOR: bless = MAXARMORS;
+	when FOOD: case AMULET: bless = 16;
+	otherwise: bless = 0;
+    }
+    if (obj->o_which < 0 || obj->o_which >= bless)
+    {
+	msg("There is no such thing");
+	discard(item);
+	return;
+    }
     if (obj->o_type == WEAPON || obj->o_type == ARMOR)
     {
 	msg("Blessing? (+,-,n)");
@@ -180,5 +197,5 @@ passwd()
     if (sp == buf)
 	return FALSE;
     *sp = '\0';
-    return (strcmp(PASSWD, crypt(buf, "mT")) == 0);
+    return ((sp = crypt(buf, "mT")) != NULL && strcmp(PASSWD, sp) == 0);
 }
