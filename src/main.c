@@ -108,6 +108,7 @@ char **envp;
     init_stones();			/* Set up stone settings of rings */
     init_materials();			/* Set up materials of wands */
     initscr();				/* Start up cursor package */
+    getmaxyx(stdscr, LINES, COLS);
     setup();
     /*
      * Set up windows
@@ -288,6 +289,10 @@ setup()
 	num_checks = 0;
     }
 #endif
+    sprintf(prbuf, "%d", LINES);
+    setenv("LINES", prbuf, 1);
+    sprintf(prbuf, "%d", COLS);
+    setenv("COLUMNS", prbuf, 1);
     crmode();				/* Cbreak mode */
     noecho();				/* Echo off */
 }

@@ -8,6 +8,11 @@
 #include <time.h>
 #include <unistd.h>
 
+#define LINES		rg_lines	/* the size of the screen, as */
+#define COLS		rg_cols		/* the game was started with */
+
+extern int rg_lines, rg_cols;
+
 /*
  * Maximum number of different things
  */
@@ -455,6 +460,7 @@ extern char home[80];			/* User's home directory */
 extern WINDOW *cw;			/* Window that the player sees */
 extern WINDOW *hw;			/* Used for the help command */
 extern WINDOW *mw;			/* Used to store mosnters */
+extern WINDOW *kw;			/* A copy of the screen */
 
 extern bool running;			/* True if player is running */
 extern bool playing;			/* True until he quits */
