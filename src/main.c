@@ -120,6 +120,12 @@ char **envp;
     init_materials();			/* Set up materials of wands */
     initscr();				/* Start up cursor package */
     getmaxyx(stdscr, LINES, COLS);
+    if (LINES < 24 || COLS < 80)
+    {
+	endwin();
+	printf("\nSorry, rogue needs a terminal with at least 24 lines and 80 columns.\n");
+	exit(1);
+    }
     setup();
     /*
      * Set up windows
