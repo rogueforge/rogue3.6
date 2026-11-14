@@ -13,12 +13,63 @@
 
 typedef struct stat STAT;
 
-extern char version[], encstr[], *strerror();
+extern char version[], *strerror();
+extern const char encstr[];
 #include <errno.h>
 
-char *sbrk();
+extern char __executable_start[], _end[];
+extern char rg_bss[], *const rg_edata, *const rg_ebss;
+extern int playit(), rg_restored();
+
+long save_stamp[2];			/* tell one build from another */
+char save_win[3][MAXLINES][MAXCOLS];	/* stdscr, mw and cw */
+int save_lines, save_cols;		/* and how big they were */
+
+#ifdef __SANITIZE_ADDRESS__
+#define NOCHECK	__attribute__((no_sanitize_address))
+#define read	rg_read
+#else
+#define NOCHECK
+#endif
 
 STAT sbuf;
+
+/*
+ * save_ok:
+ *	A saved game is the game's variables from version to rg_edata
+ *	and from rg_bss to rg_ebss.  See that they are where that takes
+ *	them to be, by one variable of each kind, and that save_win[]
+ *	has room for the screen.
+ */
+save_ok()
+{
+    return ((char *) &level >= version && (char *) &level < rg_edata
+	&& (char *) &save_lines >= rg_bss && (char *) &save_lines < rg_ebss
+	&& LINES <= MAXLINES && COLS <= MAXCOLS);
+}
+
+/*
+ * save_wins:
+ *	Copy what is in the windows that hold the level to save_win[],
+ *	or back from it into the windows
+ */
+save_wins(back)
+bool back;
+{
+    register int i, y, x;
+    register WINDOW *win;
+
+    for (i = 0; i < 3; i++)
+    {
+	win = (i == 0 ? stdscr : i == 1 ? mw : cw);
+	for (y = 0; y < LINES; y++)
+	    for (x = 0; x < COLS; x++)
+		if (back)
+		    mvwaddch(win, y, x, (unsigned char) save_win[i][y][x]);
+		else
+		    save_win[i][y][x] = mvwinch(win, y, x) & A_CHARTEXT;
+    }
+}
 
 save_game()
 {
@@ -26,6 +77,11 @@ save_game()
     register int c;
     char buf[80];
 
+    if (!save_ok())
+    {
+	msg("This rogue cannot save a game");
+	return FALSE;
+    }
     /*
      * get file name
      */
@@ -80,6 +136,8 @@ auto_save()
 
     for (i = 0; i < NSIG; i++)
 	signal(i, SIG_IGN);
+    if (!save_ok())
+	exit(1);
     if (file_name[0] != '\0' && (savef = fopen(file_name, "w")) != NULL)
 	save_file(savef);
     exit(1);
@@ -96,7 +154,13 @@ register FILE *savef;
     fstat(fileno(savef), &sbuf);
     fwrite("junk", 1, 5, savef);
     fseek(savef, 0L, 0);
-    encwrite(version, sbrk(0) - version, savef);
+    save_lines = LINES;
+    save_cols = COLS;
+    save_wins(FALSE);
+    save_stamp[0] = (long) playit - (long) version;
+    save_stamp[1] = (long) rg_restored - (long) __executable_start;
+    encwrite(version, rg_edata - version, savef);
+    encwrite(rg_bss, rg_ebss - rg_bss, savef);
     fclose(savef);
 }
 
@@ -106,11 +170,12 @@ char **envp;
 {
     register int inf;
     extern char **environ;
-    char buf[80];
+    char buf[80], name[80];
     STAT sbuf2;
+    int y, x;
 
     if (strcmp(file, "-r") == 0)
-	file = file_name;
+	file = strcpy(name, file_name);
     if ((inf = open(file, 0)) < 0)
     {
 	perror(file);
@@ -126,10 +191,33 @@ char **envp;
     }
 
     fstat(inf, &sbuf2);
+    if (sbuf2.st_size != (rg_edata - version) + (rg_ebss - rg_bss))
+    {
+	printf("Sorry, saved game is out of date.\n");
+	return FALSE;
+    }
     fflush(stdout);
-    brk(version + sbuf2.st_size);
     lseek(inf, 0L, 0);
-    encread(version, (unsigned int) sbuf2.st_size, inf);
+    if (encread(version, (unsigned int) (rg_edata - version), inf)
+	    != rg_edata - version
+	|| encread(rg_bss, (unsigned int) (rg_ebss - rg_bss), inf)
+	    != rg_ebss - rg_bss)
+    {
+	printf("Sorry, saved game is damaged.\n");
+	return FALSE;
+    }
+    if (save_stamp[0] != (long) playit - (long) version
+	|| save_stamp[1] != (long) rg_restored - (long) __executable_start)
+    {
+	printf("Sorry, saved game is out of date.\n");
+	return FALSE;
+    }
+    rg_rebase(__executable_start, _end, version, rg_edata, rg_bss, rg_ebss);
+    if (!rg_restored())
+    {
+	printf("Sorry, saved game is damaged.\n");
+	return FALSE;
+    }
     /*
      * we do not close the file so that we will have a hold of the
      * inode for as long as possible
@@ -146,6 +234,25 @@ char **envp;
 	    printf("Sorry, file has been touched.\n");
 	    return FALSE;
 	}
+    initscr();
+    getmaxyx(stdscr, y, x);
+    if (y < save_lines || x < save_cols)
+    {
+	endwin();
+	printf("Sorry, this saved game needs a terminal with %d lines and %d columns.\n", save_lines, save_cols);
+	return FALSE;
+    }
+    LINES = save_lines;
+    COLS = save_cols;
+    cw = newwin(LINES, COLS, 0, 0);
+    mw = newwin(LINES, COLS, 0, 0);
+    hw = newwin(LINES, COLS, 0, 0);
+    scrollok(cw, FALSE);
+    scrollok(mw, FALSE);
+    scrollok(stdscr, FALSE);
+    scrollok(hw, FALSE);
+    kw = NULL;
+    save_wins(TRUE);
     mpos = 0;
     mvwprintw(cw, 0, 0, "%s: %s", file, ctime(&sbuf2.st_mtime));
 
@@ -155,17 +262,18 @@ char **envp;
     if (!wizard)
 	if (sbuf2.st_nlink != 1)
 	{
+	    endwin();
 	    printf("Cannot restore from a linked file\n");
 	    return FALSE;
 	}
 	else if (unlink(file) < 0)
 	{
+	    endwin();
 	    printf("Cannot unlink file\n");
 	    return FALSE;
 	}
 
     environ = envp;
-    setterm(getenv("TERM"));
     strcpy(file_name, file);
     setup();
     clearok(curscr, TRUE);
@@ -178,12 +286,13 @@ char **envp;
 /*
  * perform an encrypted write
  */
+NOCHECK
 encwrite(start, size, outf)
 register char *start;
 unsigned int size;
 register FILE *outf;
 {
-    register char *ep;
+    register const char *ep;
 
     ep = encstr;
 
@@ -198,12 +307,13 @@ register FILE *outf;
 /*
  * perform an encrypted read
  */
+NOCHECK
 encread(start, size, inf)
 register char *start;
 unsigned int size;
 register int inf;
 {
-    register char *ep;
+    register const char *ep;
     register int read_size;
 
     if ((read_size = read(inf, start, size)) == -1 || read_size == 0)

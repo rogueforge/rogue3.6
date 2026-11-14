@@ -8,6 +8,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#define MAXLINES	128		/* most screen lines a saved game holds */
+#define MAXCOLS		256		/* most screen columns a saved game holds */
 #define LINES		rg_lines	/* the size of the screen, as */
 #define COLS		rg_cols		/* the game was started with */
 
@@ -484,6 +486,10 @@ extern bool in_shell;			/* True if executing a shell */
 
 extern coord oldpos;			/* Position before last look() call */
 extern coord delta;			/* Change indicated to get_dir() */
+
+#define malloc	rg_alloc
+#define calloc	rg_calloc
+#define free	rg_free
 
 struct linked_list *find_mons(), *find_obj(), *get_item(), *new_item();
 struct linked_list *new_thing(), *wake_monster();
