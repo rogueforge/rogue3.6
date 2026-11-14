@@ -271,14 +271,14 @@ register char *str;
 		else				/* string option */
 		{
 		    register char *start;
+		    char value[MAXSTR];
 		    /*
 		     * Skip to start of string value
 		     */
-		    for (str = *sp ? sp + 1 : sp; *str == '='; str++)
+		    for (str = sp; *str == '='; str++)
 			continue;
 		    if (*str == '~' && op->o_opt == (int *) file_name)
 		    {
-			strcpy((char *) op->o_opt, home);
 			start = (char *) op->o_opt + strlen(home);
 			while (*++str == '/')
 			    continue;
@@ -288,9 +288,15 @@ register char *str;
 		    /*
 		     * Skip to end of string value
 		     */
-		    for (sp = *str ? str + 1 : str; *sp && *sp != ','; sp++)
+		    for (sp = str; *sp && *sp != ','; sp++)
 			continue;
-		    strucpy(start, str, sp - str);
+		    strucpy(value, str, sp - str);
+		    if (value[0] != '\0')
+		    {
+			if (start != (char *) op->o_opt)
+			    strcpy((char *) op->o_opt, home);
+			strcpy(start, value);
+		    }
 		}
 		break;
 	    }
