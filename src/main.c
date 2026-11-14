@@ -263,7 +263,9 @@ setup()
     signal(SIGILL, auto_save);
     signal(SIGTRAP, auto_save);
     signal(SIGIOT, auto_save);
+#ifdef SIGEMT
     signal(SIGEMT, auto_save);
+#endif
     signal(SIGFPE, auto_save);
     signal(SIGBUS, auto_save);
     signal(SIGSEGV, auto_save);
