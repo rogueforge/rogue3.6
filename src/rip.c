@@ -210,7 +210,12 @@ char monst;
 	    else if (prflags == 2)
 	    {
 		fflush(stdout);
-		if (fgets(prbuf, MAXSTR, stdin) != NULL && prbuf[0] == 'd')
+		if (fgets(prbuf, MAXSTR, stdin) == NULL)
+		    prbuf[0] = '\0';
+		else if (prbuf[strcspn(prbuf, "\n")] == '\0')
+		    while ((i = getchar()) != '\n' && i != EOF)
+			continue;
+		if (prbuf[0] == 'd')
 		{
 		    for (sc2 = scp; sc2 < &top_ten[9]; sc2++)
 			*sc2 = *(sc2 + 1);
