@@ -15,18 +15,21 @@ coord ch_ret;				/* Where chasing takes you */
  */
 runners()
 {
-    register struct linked_list *item;
+    register struct linked_list *item, *nitem;
     register struct thing *tp;
 
-    for (item = mlist; item != NULL; item = next(item))
+    for (item = mlist; item != NULL; item = nitem)
     {
+	nitem = next(item);
 	tp = (struct thing *) ldata(item);
 	if (off(*tp, ISHELD) && on(*tp, ISRUN))
 	{
 	    if (off(*tp, ISSLOW) || tp->t_turn)
-		do_chase(tp);
+		if (do_chase(tp) == -1)
+		    continue;
 	    if (on(*tp, ISHASTE))
-		do_chase(tp);
+		if (do_chase(tp) == -1)
+		    continue;
 	    tp->t_turn ^= TRUE;
 	}
     }
@@ -78,14 +81,13 @@ register struct thing *th;
     {
 	if (ce(this, hero))
 	{
-	    attack(th);
-	    return;
+	    return attack(th);
 	}
 	else if (th->t_type != 'F')
 	    stoprun = TRUE;
     }
     else if (th->t_type == 'F')
-	return;
+	return 0;
     mvwaddch(cw, th->t_pos.y, th->t_pos.x, th->t_oldch);
     sch = mvwinch(cw, ch_ret.y, ch_ret.x);
     if (rer != NULL && (rer->r_flags & ISDARK) && sch == FLOOR
@@ -105,6 +107,7 @@ register struct thing *th;
      */
     if (stoprun && ce(th->t_pos, *(th->t_dest)))
 	th->t_flags &= ~ISRUN;
+    return 0;
 }
 
 /*
