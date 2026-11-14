@@ -13,7 +13,7 @@
  */
 wear()
 {
-    register struct linked_list *item;
+    register struct linked_list *item, *ip;
     register struct object *obj;
 
     if (cur_armor != NULL)
@@ -34,6 +34,10 @@ wear()
 	return;
     }
     waste_time();
+    for (ip = pack; ip != NULL && ip != item; ip = next(ip))
+	continue;
+    if (ip == NULL)
+	return;
     if (!terse)
 	addmsg("You are now w");
     else
