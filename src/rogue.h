@@ -8,6 +8,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#define MAXSTR		80		/* maximum length of strings */
+#define MAXINP		50		/* maximum length of an input string */
 #define MAXLINES	128		/* most screen lines a saved game holds */
 #define MAXCOLS		256		/* most screen columns a saved game holds */
 #define LINES		rg_lines	/* the size of the screen, as */
