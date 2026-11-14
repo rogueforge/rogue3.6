@@ -72,6 +72,7 @@ create_obj()
 
     item = new_item(sizeof *obj);
     obj = (struct object *) ldata(item);
+    obj->o_damage = obj->o_hurldmg = "0d0";
     msg("Type of item: ");
     obj->o_type = readchar();
     mpos = 0;
