@@ -146,7 +146,8 @@ bool gotdir;
 			{
 			    rm = rnd_room();
 			    rnd_pos(&rooms[rm], &tp->t_pos);
-			} until(winat(tp->t_pos.y, tp->t_pos.x) == FLOOR);
+			} until(winat(tp->t_pos.y, tp->t_pos.x) == FLOOR
+			    && !ce(tp->t_pos, hero));
 		    }
 		    else
 		    {
