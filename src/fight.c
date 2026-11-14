@@ -270,8 +270,7 @@ register struct thing *mp;
 	mp->t_stats.s_hpt++;
     if (fight_flush)
     {
-	raw();	/* flush typeahead */
-	noraw();
+	flushinp();	/* flush typeahead */
     }
     count = 0;
     status();
