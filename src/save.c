@@ -180,7 +180,7 @@ char **envp;
     extern char **environ;
     char buf[80], name[MAXPATH];
     STAT sbuf2;
-    int y, x;
+    int y, x, owiz;
 
     if (strcmp(file, "-r") == 0)
 	file = strcpy(name, file_name);
@@ -216,6 +216,7 @@ char **envp;
     }
     fflush(stdout);
     lseek(inf, 0L, 0);
+    owiz = wizard;
     if (encread(version, (unsigned int) (rg_edata - version), inf)
 	    != rg_edata - version
 	|| encread(rg_bss, (unsigned int) (rg_ebss - rg_bss), inf)
@@ -236,12 +237,14 @@ char **envp;
 	printf("Sorry, saved game is damaged.\n");
 	return FALSE;
     }
+    if ((wizard = owiz) != FALSE)
+	waswizard = TRUE;
     /*
      * we do not close the file so that we will have a hold of the
      * inode for as long as possible
      */
 
-    if (!wizard)
+    if (!owiz)
 	if (sbuf2.st_ino != sbuf.st_ino)
 	{
 	    printf("Sorry, saved game is not in the same file.\n");
@@ -280,7 +283,7 @@ char **envp;
     /*
      * defeat multiple restarting from the same place
      */
-    if (!wizard)
+    if (!owiz)
 	if (sbuf2.st_nlink != 1)
 	{
 	    endwin();
