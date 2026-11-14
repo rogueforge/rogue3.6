@@ -245,8 +245,13 @@ command()
 			    init_weapon(obj, SWORD);
 			    obj->o_hplus = 1;
 			    obj->o_dplus = 1;
+			    obj->o_group = 0;
+			    i = inpack;
 			    add_pack(item, TRUE);
-			    cur_weapon = obj;
+			    if (inpack > i)
+				cur_weapon = obj;
+			    else
+				discard(item);
 			    /*
 			     * And his suit of armor
 			     */
@@ -257,8 +262,14 @@ command()
 			    obj->o_damage = obj->o_hurldmg = "0d0";
 			    obj->o_ac = -5;
 			    obj->o_flags |= ISKNOW;
-			    cur_armor = obj;
+			    obj->o_count = 1;
+			    obj->o_group = 0;
+			    i = inpack;
 			    add_pack(item, TRUE);
+			    if (inpack > i)
+				cur_armor = obj;
+			    else
+				discard(item);
 			}
 			otherwise :
 			    msg("Illegal command '%s'.", unctrl(ch));
