@@ -79,7 +79,7 @@ bool silent;
 	{
 	    msg("The scroll turns to dust as you pick it up.");
 	    detach(lvl_obj, item);
-	    mvaddch(hero.y, hero.x, FLOOR);
+	    mvaddch(hero.y, hero.x, (roomin(&hero) == NULL ? PASSAGE : FLOOR));
 	    discard(item);
 	    return;
 	}
