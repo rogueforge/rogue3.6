@@ -227,12 +227,6 @@ eat()
 	    msg("That's Inedible!");
 	return;
     }
-    inpack--;
-    if (--obj->o_count < 1)
-    {
-	detach(pack, item);
-	discard(item);
-    }
     if (obj->o_which == 1)
 	msg("My, that was a yummy %s", fruit);
     else
@@ -249,6 +243,12 @@ eat()
     hungry_state = 0;
     if (obj == cur_weapon)
 	cur_weapon = NULL;
+    inpack--;
+    if (--obj->o_count < 1)
+    {
+	detach(pack, item);
+	discard(item);
+    }
 }
 
 /*
