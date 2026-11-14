@@ -482,7 +482,7 @@ extern coord delta;			/* Change indicated to get_dir() */
 struct linked_list *find_mons(), *find_obj(), *get_item(), *new_item();
 struct linked_list *new_thing(), *wake_monster();
 
-char *malloc(), *getenv(), *unctrl(), *tr_name(), *new();
+char *malloc(), *getenv(), *tr_name(), *new();
 char *vowelstr(), *inv_name(), *strcpy(), *strcat();
 char *ctime(), *num(), *ring_num(), *charge_str();
 
