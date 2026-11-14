@@ -192,16 +192,19 @@ status()
     s_add = pstats.s_str.st_add;
     s_exp = pstats.s_exp;
     s_ac = (cur_armor != NULL ? cur_armor->o_ac : pstats.s_arm);
-    mvwaddstr(cw, LINES - 1, 0, buf);
+    temp = COLS - 1 - strlen(buf);
+    if (temp < 0)
+	temp = 0;
+    mvwaddnstr(cw, LINES - 1, 0, buf, COLS - 1);
     switch (hungry_state)
     {
 	when 0: ;
 	when 1:
-	    waddstr(cw, "  Hungry");
+	    waddnstr(cw, "  Hungry", temp);
 	when 2:
-	    waddstr(cw, "  Weak");
+	    waddnstr(cw, "  Weak", temp);
 	when 3:
-	    waddstr(cw, "  Fainting");
+	    waddnstr(cw, "  Fainting", temp);
     }
     wclrtoeol(cw);
     s_hungry = hungry_state;
