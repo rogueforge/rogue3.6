@@ -11,6 +11,8 @@
 #include <signal.h>
 #include <pwd.h>
 #include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include "mach_dep.h"
 #include "rogue.h"
 
@@ -217,12 +219,21 @@ char **envp;
 open_score()
 {
     register int i;
+    struct stat sbuf, sbuf2;
 
     while ((i = open("/dev/null", O_RDWR)) >= 0 && i < 3)
 	continue;
     if (i >= 3)
 	close(i);
-    fd = open(SCOREFILE, 2);
+    if (lstat(SCOREFILE, &sbuf) < 0 || (sbuf.st_mode & S_IFMT) != S_IFREG
+	|| sbuf.st_nlink != 1)
+	    fd = -1;
+    else if ((fd = open(SCOREFILE, 2)) >= 0 && (fstat(fd, &sbuf2) < 0
+	|| sbuf2.st_dev != sbuf.st_dev || sbuf2.st_ino != sbuf.st_ino))
+    {
+	close(fd);
+	fd = -1;
+    }
     if ((setregid(getgid(), getgid()) < 0 || setreuid(getuid(), getuid()) < 0)
 	&& (getegid() != getgid() || geteuid() != getuid()))
     {
