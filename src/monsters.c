@@ -122,7 +122,7 @@ wanderer()
 	    discard(item);
 	    return;
 	}
-    } until(hr != rp && step_ok(ch));
+    } until(hr != rp && find_mons(cp.y, cp.x) == NULL && step_ok(ch));
     new_monster(item, randmonster(TRUE), &cp);
     tp = (struct thing *) ldata(item);
     tp->t_flags |= ISRUN;
