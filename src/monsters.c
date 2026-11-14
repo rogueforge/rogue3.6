@@ -22,12 +22,18 @@ static char wand_mons[] = "KJBSH AOZG CRQ Y W IXU V  ";
 randmonster(wander)
 bool wander;
 {
-    register int d;
+    register int d, cnt = 0;
     register char *mons;
 
     mons = wander ? wand_mons : lvl_mons;
     do
     {
+	if (cnt++ == 100)
+	{
+	    for (cnt = 0; mons[cnt] == ' '; cnt++)
+		continue;
+	    return mons[cnt] ? mons[cnt] : "KJBSHEAOZGLCRQNYTWFIXUMVDP"[d];
+	}
 	d = level + (rnd(10) - 5);
 	if (d < 1)
 	    d = rnd(5) + 1;
