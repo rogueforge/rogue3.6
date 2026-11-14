@@ -326,7 +326,7 @@ char *
 killname(monst)
 register char monst;
 {
-    if (isupper(monst))
+    if (isupper((unsigned char) monst))
 	return monsters[monst-'A'].m_name;
     else
 	switch (monst)

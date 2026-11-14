@@ -207,7 +207,7 @@ genocide()
     if (!terse)
 	addmsg(" do you wish to wipe out");
     msg("? ");
-    while (!isalpha(c = readchar()))
+    while (!isalpha((unsigned char) (c = readchar())))
 	if (c == ESCAPE)
 	    return;
 	else

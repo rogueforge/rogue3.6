@@ -77,7 +77,7 @@ create_obj()
     obj->o_type = readchar();
     mpos = 0;
     msg("Which %c do you want? (0-f)", obj->o_type);
-    obj->o_which = (isdigit((ch = readchar())) ? ch - '0' : ch - 'a' + 10);
+    obj->o_which = (isdigit((unsigned char) (ch = readchar())) ? ch - '0' : ch - 'a' + 10);
     obj->o_group = 0;
     obj->o_count = 1;
     mpos = 0;
