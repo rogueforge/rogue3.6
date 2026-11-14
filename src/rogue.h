@@ -484,7 +484,7 @@ struct linked_list *new_thing(), *wake_monster();
 
 char *malloc(), *getenv(), *unctrl(), *tr_name(), *new();
 char *vowelstr(), *inv_name(), *strcpy(), *strcat();
-char *ctime(), *num(), *ring_num();
+char *ctime(), *num(), *ring_num(), *charge_str();
 
 struct room *roomin();
 

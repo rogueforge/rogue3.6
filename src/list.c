@@ -99,7 +99,7 @@ int size;
 
     if (space == NULL)
     {
-	sprintf(prbuf, "Rogue ran out of memory (%d).  Fatal error!", sbrk(0));
+	sprintf(prbuf, "Rogue ran out of memory (%ld).  Fatal error!", (long) sbrk(0));
 	fatal(prbuf);
     }
     total++;

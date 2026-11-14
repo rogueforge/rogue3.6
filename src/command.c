@@ -549,7 +549,7 @@ shell()
 	 */
 	setuid(getuid());
 	setgid(getgid());
-	execl(sh == NULL ? "/bin/sh" : sh, "shell", "-i", 0);
+	execl(sh == NULL ? "/bin/sh" : sh, "shell", "-i", (char *) 0);
 	perror("No shelly");
 	exit(-1);
     }

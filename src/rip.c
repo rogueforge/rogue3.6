@@ -161,7 +161,7 @@ char monst;
     printf("\nTop Ten Adventurers:\nRank\tScore\tName\n");
     for (scp = top_ten; scp < &top_ten[10]; scp++) {
 	if (scp->sc_score) {
-	    printf("%d\t%d\t%s: %s on level %d", scp - top_ten + 1,
+	    printf("%d\t%d\t%s: %s on level %d", (int) (scp - top_ten) + 1,
 		scp->sc_score, scp->sc_name, reason[scp->sc_flags],
 		scp->sc_level);
 	    if (scp->sc_flags == 0) {
