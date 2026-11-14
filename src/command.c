@@ -212,7 +212,7 @@ command()
 			when CTRL('I') : inventory(lvl_obj, 0);
 			when CTRL('W') : whatis();
 			when CTRL('D') : level++; new_level();
-			when CTRL('U') : level--; new_level();
+			when CTRL('U') : level -= level > 1; new_level();
 			when CTRL('F') : show_win(stdscr, "--More (level map)--");
 			when CTRL('X') : show_win(mw, "--More (monsters)--");
 			when CTRL('T') : teleport();
