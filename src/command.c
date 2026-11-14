@@ -643,7 +643,8 @@ call()
     {
 	if (guess[obj->o_which] != NULL)
 	    free(guess[obj->o_which]);
-	guess[obj->o_which] = malloc((unsigned int) strlen(prbuf) + 1);
+	guess[obj->o_which] = malloc((unsigned int) (strlen(prbuf)
+	    < sizeof (struct thing) ? sizeof (struct thing) : strlen(prbuf) + 1));
 	strcpy(guess[obj->o_which], prbuf);
     }
 }

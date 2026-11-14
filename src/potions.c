@@ -186,7 +186,8 @@ quaff()
 	buf[0] = '\0';
 	if (get_str(buf, cw) == NORM && buf[0] != '\0')
 	{
-	    p_guess[obj->o_which] = malloc((unsigned int) strlen(buf) + 1);
+	    p_guess[obj->o_which] = malloc((unsigned int) (strlen(buf)
+		< sizeof (struct thing) ? sizeof (struct thing) : strlen(buf) + 1));
 	    strcpy(p_guess[obj->o_which], buf);
 	}
     }
