@@ -10,6 +10,7 @@
 #include <curses.h>
 #include <signal.h>
 #include <pwd.h>
+#include <fcntl.h>
 #include "mach_dep.h"
 #include "rogue.h"
 
@@ -215,6 +216,12 @@ char **envp;
  */
 open_score()
 {
+    register int i;
+
+    while ((i = open("/dev/null", O_RDWR)) >= 0 && i < 3)
+	continue;
+    if (i >= 3)
+	close(i);
     fd = open(SCOREFILE, 2);
     if ((setregid(getgid(), getgid()) < 0 || setreuid(getuid(), getuid()) < 0)
 	&& (getegid() != getgid() || geteuid() != getuid()))
