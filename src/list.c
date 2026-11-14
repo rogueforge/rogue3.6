@@ -98,7 +98,10 @@ int size;
     register char *space = ALLOC(size);
 
     if (space == NULL)
-	fatal(sprintf(prbuf, "Rogue ran out of memory (%d).  Fatal error!", sbrk(0)));
+    {
+	sprintf(prbuf, "Rogue ran out of memory (%d).  Fatal error!", sbrk(0));
+	fatal(prbuf);
+    }
     total++;
     return space;
 }
