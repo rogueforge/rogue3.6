@@ -194,6 +194,8 @@ drop()
     else
 	detach(pack, obj);
     inpack--;
+    if (op->o_type == AMULET)
+	amulet = FALSE;
     /*
      * Link it into the level object list
      */

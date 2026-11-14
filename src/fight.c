@@ -246,6 +246,8 @@ register struct thing *mp;
 			{
 			    msg("She stole %s!", inv_name(obj, TRUE));
 			    detach(pack, steal);
+			    if (obj->o_type == AMULET)
+				amulet = FALSE;
 			    discard(steal);
 			}
 			inpack--;

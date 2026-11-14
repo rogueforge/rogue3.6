@@ -72,6 +72,8 @@ int ydelta, xdelta;
     {
 	detach(pack, item);
 	inpack--;
+	if (obj->o_type == AMULET)
+	    amulet = FALSE;
     }
     else
     {
