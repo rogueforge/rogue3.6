@@ -238,9 +238,15 @@ register int number, sides;
  */
 tstp()
 {
+    sigset_t set;
+
     mvcur(0, COLS - 1, LINES - 1, 0);
     endwin();
     fflush(stdout);
+    signal(SIGTSTP, SIG_DFL);
+    sigemptyset(&set);
+    sigaddset(&set, SIGTSTP);
+    sigprocmask(SIG_UNBLOCK, &set, NULL);
     kill(0, SIGTSTP);
     signal(SIGTSTP, tstp);
     crmode();
