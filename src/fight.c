@@ -645,6 +645,7 @@ bool pr;
 {
     register struct thing *tp;
     register struct linked_list *pitem, *nexti;
+    coord pos;
 
     tp = (struct thing *) ldata(item);
     if (pr)
@@ -698,6 +699,7 @@ bool pr;
      * Empty the monsters pack
      */
     pitem = tp->t_pack;
+    pos = tp->t_pos;
     /*
      * Get rid of the monster.
      */
@@ -706,10 +708,9 @@ bool pr;
     {
 	register struct object *obj;
 
-	nexti = next(tp->t_pack);
+	nexti = next(pitem);
 	obj = (struct object *) ldata(pitem);
-	obj->o_pos = tp->t_pos;
-	detach(tp->t_pack, pitem);
+	obj->o_pos = pos;
 	fall(pitem, FALSE);
 	pitem = nexti;
     }
