@@ -61,6 +61,8 @@ bool ws_know[MAXSTICKS];		/* Does he know what a stick does */
 coord oldpos;				/* Position before last look() call */
 coord delta;				/* Change indicated to get_dir() */
 
+char fung_dmg[] = "000d0";
+
 #define ___ 1
 #define _x {1,1}
 struct monster monsters[26] = {
@@ -70,7 +72,7 @@ struct monster monsters[26] = {
 	{ "centaur",	 15,	0,	{ _x, 15,   4,   4, ___, "1d6/1d6" } },
 	{ "dragon",	 100,	ISGREED,{ _x,9000, 10,  -1, ___, "1d8/1d8/3d10" } },
 	{ "floating eye",0,	0,	{ _x,  5,   1,   9, ___, "0d0" } },
-	{ "violet fungi",0,	ISMEAN,	{ _x, 85,   8,   3, ___, "000d0" } },
+	{ "violet fungi",0,	ISMEAN,	{ _x, 85,   8,   3, ___, fung_dmg } },
 	{ "gnome",	 10,	0,	{ _x,  8,   1,   5, ___, "1d6" } },
 	{ "hobgoblin",	 0,	ISMEAN,	{ _x,  3,   1,   5, ___, "1d8" } },
 	{ "invisible stalker",0,ISINVIS,{ _x,120,   8,   3, ___, "4d4" } },
