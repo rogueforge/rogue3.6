@@ -101,10 +101,16 @@ wanderer()
     register struct linked_list *item;
     register struct thing *tp;
     coord cp;
+    register int cnt = 0;
 
     item = new_item(sizeof *tp);
     do
     {
+	if (cnt++ >= 500)
+	{
+	    discard(item);
+	    return;
+	}
 	i = rnd_room();
 	if ((rp = &rooms[i]) == hr)
 	    continue;
@@ -113,6 +119,7 @@ wanderer()
 	{
 	    debug("Routine wanderer: mvwinch failed to %d,%d", cp.y, cp.x);
 	    wait_for('\n');
+	    discard(item);
 	    return;
 	}
     } until(hr != rp && step_ok(ch));
