@@ -101,7 +101,7 @@ put_things()
     register int i;
     register struct linked_list *item;
     register struct object *cur;
-    register int rm;
+    register int rm, cnt;
     coord tp;
 
     /*
@@ -130,7 +130,13 @@ put_things()
 	     * Put it somewhere
 	     */
 	    rm = rnd_room();
+	    cnt = 0;
 	    do {
+		if (cnt++ == 100)
+		{
+		    rm = rnd_room();
+		    cnt = 1;
+		}
 		rnd_pos(&rooms[rm], &tp);
 	    } until (winat(tp.y, tp.x) == FLOOR);
 	    mvaddch(tp.y, tp.x, cur->o_type);
@@ -153,7 +159,13 @@ put_things()
 	 * Put it somewhere
 	 */
 	rm = rnd_room();
+	cnt = 0;
 	do {
+	    if (cnt++ == 100)
+	    {
+		rm = rnd_room();
+		cnt = 1;
+	    }
 	    rnd_pos(&rooms[rm], &tp);
 	} until (winat(tp.y, tp.x) == FLOOR);
 	mvaddch(tp.y, tp.x, cur->o_type);
