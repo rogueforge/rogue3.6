@@ -69,6 +69,7 @@ create_obj()
     register struct linked_list *item;
     register struct object *obj;
     register char ch, bless;
+    register int had;
 
     item = new_item(sizeof *obj);
     obj = (struct object *) ldata(item);
@@ -138,7 +139,10 @@ create_obj()
 	}
     else if (obj->o_type == STICK)
 	fix_stick(obj);
+    had = total;
     add_pack(item, FALSE);
+    if (total == had && pack_char(obj) == 'z')
+	discard(item);
 }
 
 /*
