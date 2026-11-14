@@ -116,7 +116,11 @@ bool gotdir;
 		register char omonst = monster;
 
 		if (monster == 'F')
+		{
 		    player.t_flags &= ~ISHELD;
+		    fung_hit = 0;
+		    strcpy(monsters['F'-'A'].m_stats.s_dmg, "000d0");
+		}
 		item = find_mons(y, x);
 		tp = (struct thing *) ldata(item);
 		if (obj->o_which == WS_POLYMORPH)
