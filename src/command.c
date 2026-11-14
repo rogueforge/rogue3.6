@@ -545,6 +545,7 @@ shell()
 	sleep(1);
     if (pid == 0)
     {
+	close(fd);
 	/*
 	 * Set back to original user, just in case
 	 */
