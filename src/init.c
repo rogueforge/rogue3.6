@@ -41,14 +41,14 @@ char *r_stones[MAXRINGS];		/* Stone settings of the rings */
 char *ws_made[MAXSTICKS];		/* What sticks are made of */
 char whoami[80];			/* Name of player */
 char fruit[80];				/* Favorite fruit */
-char huh[80];				/* The last message printed */
+char huh[BUFSIZ + MAXPATH];		/* The last message printed */
 char *s_guess[MAXSCROLLS];		/* Players guess at what scroll is */
 char *p_guess[MAXPOTIONS];		/* Players guess at what potion is */
 char *r_guess[MAXRINGS];		/* Players guess at what ring is */
 char *ws_guess[MAXSTICKS];		/* Players guess at what wand is */
 char *ws_type[MAXSTICKS];		/* Is it a wand or a staff */
-char file_name[80];			/* Save file name */
-char home[80];				/* User's home directory */
+char file_name[MAXPATH];		/* Save file name */
+char home[MAXPATH];			/* User's home directory */
 WINDOW *cw;				/* Window that the player sees */
 WINDOW *hw;				/* Used for the help command */
 WINDOW *mw;				/* Used to store mosnters */

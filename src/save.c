@@ -75,7 +75,7 @@ save_game()
 {
     register FILE *savef;
     register int c;
-    char buf[80];
+    char buf[MAXPATH];
 
     if (!save_ok())
     {
@@ -170,7 +170,7 @@ char **envp;
 {
     register int inf;
     extern char **environ;
-    char buf[80], name[80];
+    char buf[80], name[MAXPATH];
     STAT sbuf2;
     int y, x;
 
@@ -274,7 +274,8 @@ char **envp;
 	}
 
     environ = envp;
-    strcpy(file_name, file);
+    strncpy(file_name, file, MAXPATH - 1);
+    file_name[MAXPATH - 1] = '\0';
     setup();
     clearok(curscr, TRUE);
     touchwin(cw);

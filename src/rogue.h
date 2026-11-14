@@ -7,9 +7,11 @@
 #include <stdarg.h>
 #include <time.h>
 #include <unistd.h>
+#include <limits.h>
 
 #define MAXSTR		80		/* maximum length of strings */
 #define MAXINP		50		/* maximum length of an input string */
+#define MAXPATH		PATH_MAX	/* maximum length of a file name */
 #define MAXLINES	128		/* most screen lines a saved game holds */
 #define MAXCOLS		256		/* most screen columns a saved game holds */
 #define LINES		rg_lines	/* the size of the screen, as */
@@ -452,14 +454,14 @@ extern char *ws_made[MAXSTICKS];	/* What sticks are made of */
 extern char *release;			/* Release number of rogue */
 extern char whoami[80];			/* Name of player */
 extern char fruit[80];			/* Favorite fruit */
-extern char huh[80];			/* The last message printed */
+extern char huh[BUFSIZ + MAXPATH];	/* The last message printed */
 extern char *s_guess[MAXSCROLLS];	/* Players guess at what scroll is */
 extern char *p_guess[MAXPOTIONS];	/* Players guess at what potion is */
 extern char *r_guess[MAXRINGS];		/* Players guess at what ring is */
 extern char *ws_guess[MAXSTICKS];	/* Players guess at what wand is */
 extern char *ws_type[MAXSTICKS];	/* Is it a wand or a staff */
-extern char file_name[80];		/* Save file name */
-extern char home[80];			/* User's home directory */
+extern char file_name[MAXPATH];		/* Save file name */
+extern char home[MAXPATH];		/* User's home directory */
 
 extern WINDOW *cw;			/* Window that the player sees */
 extern WINDOW *hw;			/* Used for the help command */
