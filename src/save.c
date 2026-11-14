@@ -202,8 +202,8 @@ char **envp;
     }
 
     fflush(stdout);
-    encread(buf, strlen(version) + 1, inf);
-    if (strcmp(buf, version) != 0)
+    if (encread(buf, strlen(version) + 1, inf) != strlen(version) + 1
+	|| strcmp(buf, version) != 0)
     {
 	printf("Sorry, saved game is out of date.\n");
 	return FALSE;
