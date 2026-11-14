@@ -437,6 +437,7 @@ extern int dnum;			/* Dungeon number */
 extern int fung_hit;			/* Number of time fungi has hit */
 extern int quiet;			/* Number of quiet turns */
 extern int max_level;			/* Deepest player has gone */
+extern int fd;				/* File descriptor for score file */
 extern int food_left;			/* Amount of food in hero's stomach */
 extern int group;			/* Current group number */
 extern int hungry_state;		/* How hungry is he */

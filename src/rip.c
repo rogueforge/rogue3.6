@@ -90,7 +90,6 @@ char monst;
     register FILE *outf;
     register char *killer;
     register int prflags = 0;
-    register int fd;
     static char *reason[] = {
 	"killed",
 	"quit",
@@ -104,7 +103,7 @@ char monst;
      * Open file and read list
      */
 
-    if ((fd = open(SCOREFILE, 2)) < 0)
+    if (fd < 0)
 	return;
     outf = fdopen(fd, "w");
 

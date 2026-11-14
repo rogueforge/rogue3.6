@@ -31,6 +31,7 @@ int max_hp;				/* Player's max hit points */
 int seed;				/* Random number seed */
 int dnum;				/* Dungeon number */
 int max_level;				/* Deepest player has gone */
+int fd = -1;				/* File descriptor for score file */
 char take;				/* Thing the rogue is taking */
 char prbuf[2*MAXSTR];			/* Buffer for sprintfs */
 char outbuf[BUFSIZ];			/* Output buffer for stdout */
