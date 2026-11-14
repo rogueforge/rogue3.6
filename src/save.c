@@ -8,6 +8,7 @@
 #include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <signal.h>
 #include "rogue.h"
 
@@ -113,7 +114,10 @@ save_game()
 	}
 	strcpy(file_name, buf);
 gotfile:
-	if ((savef = fopen(file_name, "w")) == NULL)
+	if (stat(file_name, &sbuf) >= 0 && (sbuf.st_mode & S_IFMT) == S_IFREG)
+	    unlink(file_name);
+	c = open(file_name, O_WRONLY|O_CREAT|O_EXCL, 0400);
+	if ((savef = c < 0 ? NULL : fdopen(c, "w")) == NULL)
 	    msg(strerror(errno));	/* fake perror() */
     } while (savef == NULL);
 
@@ -138,7 +142,11 @@ auto_save()
 	signal(i, SIG_IGN);
     if (!save_ok())
 	exit(1);
-    if (file_name[0] != '\0' && (savef = fopen(file_name, "w")) != NULL)
+    if (stat(file_name, &sbuf) >= 0 && (sbuf.st_mode & S_IFMT) == S_IFREG)
+	unlink(file_name);
+    if (file_name[0] != '\0'
+	&& (i = open(file_name, O_WRONLY|O_CREAT|O_EXCL, 0400)) >= 0
+	&& (savef = fdopen(i, "w")) != NULL)
 	save_file(savef);
     exit(1);
 }
@@ -185,6 +193,11 @@ char **envp;
     if (sbuf2.st_uid != getuid())
     {
 	printf("Sorry, saved game is not yours.\n");
+	return FALSE;
+    }
+    if ((sbuf2.st_mode & 022) != 0)
+    {
+	printf("Sorry, saved game can be written by others.\n");
 	return FALSE;
     }
 
