@@ -442,7 +442,7 @@ extern int group;			/* Current group number */
 extern int hungry_state;		/* How hungry is he */
 
 extern char take;			/* Thing the rogue is taking */
-extern char prbuf[80];			/* Buffer for sprintfs */
+extern char prbuf[2*MAXSTR];		/* Buffer for sprintfs */
 extern char outbuf[BUFSIZ];		/* Output buffer for stdout */
 extern char runch;			/* Direction player is running */
 extern char *s_names[MAXSCROLLS];	/* Names of the scrolls */
