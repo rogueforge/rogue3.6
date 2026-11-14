@@ -104,7 +104,7 @@ read_scroll()
 	     */
 	    {
 		register int x, y;
-		register bool appear = 0;
+		register char appear = 0;
 		coord mp;
 
 		/*
