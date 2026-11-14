@@ -5,6 +5,7 @@
  */
 
 #include <stdarg.h>
+#include <time.h>
 
 /*
  * Maximum number of different things
