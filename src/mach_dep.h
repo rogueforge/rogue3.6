@@ -6,7 +6,9 @@
 /*
  * where scorefile should live
  */
+#ifndef SCOREFILE
 #define SCOREFILE	"/usr/games/lib/rogue_roll"
+#endif
 
 /*
  * Variables for checking to make sure the system isn't too loaded
