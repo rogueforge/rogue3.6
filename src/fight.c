@@ -566,7 +566,8 @@ register str_t *str;
  */
 raise_level()
 {
-    pstats.s_exp = e_levels[pstats.s_lvl-1] + 1L;
+    if (e_levels[pstats.s_lvl-1] != 0)
+	pstats.s_exp = e_levels[pstats.s_lvl-1] + 1L;
     check_level();
 }
 
