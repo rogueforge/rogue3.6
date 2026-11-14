@@ -264,7 +264,7 @@ register char *str;
 	 * Look it up and deal with it
 	 */
 	for (op = optlist; op < &optlist[NUM_OPTS]; op++)
-	    if (EQSTR(str, op->o_name, len))
+	    if (len > 0 && EQSTR(str, op->o_name, len))
 	    {
 		if (op->o_putfunc == put_bool)	/* if option is a boolean */
 		    *(bool *)op->o_opt = TRUE;
@@ -298,7 +298,8 @@ register char *str;
 	     * check for "noname" for booleans
 	     */
 	    else if (op->o_putfunc == put_bool
-	      && EQSTR(str, "no", 2) && EQSTR(str + 2, op->o_name, len - 2))
+	      && len > 2 && EQSTR(str, "no", 2)
+	      && EQSTR(str + 2, op->o_name, len - 2))
 	    {
 		*(bool *)op->o_opt = FALSE;
 		break;
