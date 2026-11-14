@@ -120,6 +120,7 @@ char monst;
     }
 
     file_name[0] = '\0';
+    signal(SIGHUP, SIG_IGN);
     signal(SIGINT, SIG_DFL);
 #ifdef SIGWINCH
     signal(SIGWINCH, SIG_IGN);
