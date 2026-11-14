@@ -165,6 +165,8 @@ coord *ee;
 	 * get a valid random move
 	 */
 	ch_ret = *rndmove(tp);
+	if (ce(ch_ret, hero) && !ce(*ee, hero))
+	    ch_ret = *er;
 	dist = DISTANCE(ch_ret.y, ch_ret.x, ee->y, ee->x);
 	/*
 	 * Small chance that it will become un-confused
@@ -215,6 +217,8 @@ coord *ee;
 			if (item != NULL && obj->o_which == S_SCARE)
 			    continue;
 		    }
+		    if (ce(tryp, hero) && !ce(*ee, hero))
+			continue;
 		    /*
 		     * If we didn't find any scrolls at this place or it
 		     * wasn't a scare scroll, then this place counts
