@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <ctype.h>
 #include <sys/types.h>
+#include <sys/resource.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include "mach_dep.h"
@@ -91,6 +92,7 @@ char monst;
     register FILE *outf;
     register char *killer;
     register int prflags = 0;
+    struct rlimit lim;
     static char *reason[] = {
 	"killed",
 	"quit",
@@ -217,7 +219,8 @@ char monst;
     /*
      * Update the list file
      */
-    if (!waswizard || prflags == 2)
+    if ((!waswizard || prflags == 2)
+	&& !(getrlimit(RLIMIT_FSIZE, &lim) == 0 && lim.rlim_cur < sizeof top_ten))
     {
 	fseek(outf, 0L, 0);
 	encwrite((char *) top_ten, sizeof top_ten, outf);
