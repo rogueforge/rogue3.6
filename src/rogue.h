@@ -492,7 +492,7 @@ coord *rndmove();
 int msg(char *fmt, ...), addmsg(char *fmt, ...);
 
 int auto_save(), endit(), nohaste(), doctor(), runners(), swander();
-int tstp(), unconfuse(), unsee(), rollwand(), stomach(), sight();
+int quit(), tstp(), unconfuse(), unsee(), rollwand(), stomach(), sight();
 
 #ifdef CHECKTIME
 int checkout();
