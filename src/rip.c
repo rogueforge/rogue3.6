@@ -92,7 +92,6 @@ char monst;
     register FILE *outf;
     register char *killer;
     register int prflags = 0;
-    struct rlimit lim;
     static char *reason[] = {
 	"killed",
 	"quit",
@@ -174,6 +173,8 @@ char monst;
 	    scp->sc_uid = getuid();
 	}
     }
+    if (prflags != 2)
+	put_scores((char *) top_ten, sizeof top_ten, outf, !waswizard);
     /*
      * Print the list
      */
@@ -227,14 +228,28 @@ char monst;
 		printf(".\n");
 	}
     }
-    /*
-     * Update the list file
-     */
-    if ((!waswizard || prflags == 2)
-	&& !(getrlimit(RLIMIT_FSIZE, &lim) == 0 && lim.rlim_cur < sizeof top_ten))
+    if (prflags == 2)
+	put_scores((char *) top_ten, sizeof top_ten, outf, TRUE);
+}
+
+/*
+ * put_scores:
+ *	Update the list file: write the table back over the score file,
+ *	if it has changed, and close the file, which lets go of the lock.
+ */
+put_scores(table, size, outf, changed)
+char *table;
+unsigned int size;
+FILE *outf;
+int changed;
+{
+    struct rlimit lim;
+
+    if (changed
+	&& !(getrlimit(RLIMIT_FSIZE, &lim) == 0 && lim.rlim_cur < size))
     {
 	fseek(outf, 0L, 0);
-	encwrite((char *) top_ten, sizeof top_ten, outf);
+	encwrite(table, size, outf);
     }
     fclose(outf);
 }
