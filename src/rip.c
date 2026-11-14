@@ -144,7 +144,13 @@ char monst;
 	    prflags = 2;
     if (!waswizard || prflags == 2)
 	hold_sc();
-    encread((char *) top_ten, sizeof top_ten, fd);
+    i = encread((char *) top_ten, sizeof top_ten, fd);
+    for (scp = sc2 = top_ten; scp < &top_ten[10]; scp++)
+	if ((char *) (scp + 1) - (char *) top_ten <= i && scp->sc_score != 0
+	    && scp->sc_flags >= 0 && scp->sc_flags <= 2)
+		*sc2++ = *scp;
+    while (sc2 < &top_ten[10])
+	sc2++->sc_score = 0;
     /*
      * Insert her in list if need be
      */
