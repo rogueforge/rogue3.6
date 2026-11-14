@@ -169,7 +169,7 @@ command()
 			after = FALSE;
 		when 'v' : msg("Rogue version %s. (mctesq was here)", release);
 		when CTRL('L') : after = FALSE; clearok(curscr,TRUE);draw(curscr);
-		when CTRL('R') : after = FALSE; msg(huh);
+		when CTRL('R') : after = FALSE; msg("%s", huh);
 		when 'S' :
 		    after = FALSE;
 		    if (save_game())
